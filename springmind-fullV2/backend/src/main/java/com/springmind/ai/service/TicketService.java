@@ -1,0 +1,205 @@
+package com.springmind.ai.service;
+
+import com.springmind.ai.exception.ResourceNotFoundException;
+import com.springmind.ai.model.*;
+import com.springmind.ai.repository.*;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.*;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+@Transactional
+public class TicketService {
+
+    private final TicketRepository        ticketRepo;
+    private final TicketCommentRepository commentRepo;
+    private final UserRepository          userRepo;
+    private final NlpClassificationService nlpService;
+
+    @Value("${app.sla.critical:2}")   private int slaCritical;
+    @Value("${app.sla.high:8}")       private int slaHigh;
+    @Value("${app.sla.medium:24}")    private int slaMedium;
+    @Value("${app.sla.low:72}")       private int slaLow;
+
+    private static final AtomicLong COUNTER = new AtomicLong(1000);
+
+    public Ticket create(String title, String description, String customerName,
+                         String customerEmail, String customerTierStr,
+                         String categoryStr, String priorityStr, String channelStr) {
+
+        // AI classify
+        NlpClassificationService.ClassificationResult ai = nlpService.classify(title + " " + description);
+
+        Ticket.TicketCategory category = categoryStr != null && !categoryStr.isBlank()
+            ? parseEnum(categoryStr, Ticket.TicketCategory.class, ai.getCategory()) : ai.getCategory();
+        Ticket.TicketPriority priority = priorityStr != null && !priorityStr.isBlank()
+            ? parseEnum(priorityStr, Ticket.TicketPriority.class, ai.getPriority()) : ai.getPriority();
+        Ticket.CustomerTier tier = parseEnum(customerTierStr, Ticket.CustomerTier.class, Ticket.CustomerTier.FREE);
+
+        int slaHrs = slaHours(priority);
+        int resHrs = nlpService.predictResolutionHours(category, priority, tier);
+
+        Ticket ticket = Ticket.builder()
+            .ticketNumber("TKT-" + String.format("%04d", COUNTER.incrementAndGet()))
+            .title(title)
+            .description(description)
+            .customerName(customerName)
+            .customerEmail(customerEmail)
+            .customerTier(tier)
+            .category(category)
+            .priority(priority)
+            .sentiment(ai.getSentiment())
+            .aiConfidence(ai.getConfidence())
+            .aiSummary(ai.getAiSummary())
+            .aiKeywords(String.join(",", ai.getKeywords()))
+            .channel(channelStr != null ? parseEnum(channelStr, Ticket.Channel.class, Ticket.Channel.WEB_FORM) : Ticket.Channel.WEB_FORM)
+            .slaDeadline(LocalDateTime.now().plusHours(slaHrs))
+            .predictedResolutionHours(resHrs)
+            .build();
+
+        return ticketRepo.save(ticket);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Map<String, Object>> list(String status, String priority, String category,
+                                          String search, int page, int size) {
+        Ticket.TicketStatus   s = parseEnumNullable(status,   Ticket.TicketStatus.class);
+        Ticket.TicketPriority p = parseEnumNullable(priority, Ticket.TicketPriority.class);
+        Ticket.TicketCategory c = parseEnumNullable(category, Ticket.TicketCategory.class);
+        String q = (search == null || search.isBlank()) ? null : search;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Ticket> tickets = ticketRepo.search(s, p, c, q, pageable);
+        return tickets.map(this::toMap);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> getById(Long id) {
+        Ticket t = ticketRepo.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Ticket not found: " + id));
+        Map<String, Object> map = new LinkedHashMap<>(toMap(t));
+        map.put("comments", commentRepo.findByTicketIdOrderByCreatedAtAsc(id).stream()
+            .map(this::commentToMap).toList());
+        return map;
+    }
+
+    public Map<String, Object> update(Long id, Map<String, Object> fields) {
+        Ticket t = ticketRepo.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Ticket not found: " + id));
+
+        if (fields.containsKey("status")) {
+            t.setStatus(parseEnum((String) fields.get("status"), Ticket.TicketStatus.class, t.getStatus()));
+            if (t.getStatus() == Ticket.TicketStatus.RESOLVED && t.getResolvedAt() == null)
+                t.setResolvedAt(LocalDateTime.now());
+        }
+        if (fields.containsKey("priority"))
+            t.setPriority(parseEnum((String) fields.get("priority"), Ticket.TicketPriority.class, t.getPriority()));
+        if (fields.containsKey("assignedAgentId")) {
+            Long agentId = Long.parseLong(fields.get("assignedAgentId").toString());
+            userRepo.findById(agentId).ifPresent(t::setAssignedAgent);
+        }
+        return toMap(ticketRepo.save(t));
+    }
+
+    public Map<String, Object> addComment(Long ticketId, String body, boolean internalNote) {
+        Ticket ticket = ticketRepo.findById(ticketId)
+            .orElseThrow(() -> new ResourceNotFoundException("Ticket not found: " + ticketId));
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User author = userRepo.findByEmail(email).orElse(null);
+
+        TicketComment comment = TicketComment.builder()
+            .ticket(ticket).author(author).body(body).internalNote(internalNote).build();
+        return commentToMap(commentRepo.save(comment));
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> dashboardStats() {
+        long open       = ticketRepo.countByStatus(Ticket.TicketStatus.OPEN);
+        long inProgress = ticketRepo.countByStatus(Ticket.TicketStatus.IN_PROGRESS);
+        long resolved   = ticketRepo.countByStatus(Ticket.TicketStatus.RESOLVED);
+        long breaches   = ticketRepo.countBySlaBreachedTrue();
+        Double avgHrs   = ticketRepo.avgResolutionHours();
+        long resToday   = ticketRepo.countResolvedSince(LocalDateTime.now().withHour(0).withMinute(0));
+
+        return Map.of(
+            "openTickets",        open,
+            "inProgressTickets",  inProgress,
+            "resolvedTickets",    resolved,
+            "slaBreaches",        breaches,
+            "avgResolutionHours", avgHrs != null ? Math.round(avgHrs * 10.0) / 10.0 : 0.0,
+            "resolvedToday",      resToday,
+            "totalTickets",       ticketRepo.count()
+        );
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    private Map<String, Object> toMap(Ticket t) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id",          t.getId());
+        m.put("ticketNumber",t.getTicketNumber());
+        m.put("title",       t.getTitle());
+        m.put("description", t.getDescription());
+        m.put("customerName",t.getCustomerName());
+        m.put("customerEmail",t.getCustomerEmail());
+        m.put("customerTier",t.getCustomerTier());
+        m.put("category",    t.getCategory());
+        m.put("priority",    t.getPriority());
+        m.put("status",      t.getStatus());
+        m.put("sentiment",   t.getSentiment());
+        m.put("aiConfidence",t.getAiConfidence());
+        m.put("aiSummary",   t.getAiSummary());
+        m.put("slaDeadline", t.getSlaDeadline());
+        m.put("slaBreached", t.isSlaBreached());
+        m.put("predictedResolutionHours", t.getPredictedResolutionHours());
+        m.put("assignedAgent", t.getAssignedAgent() != null ? Map.of(
+            "id",   t.getAssignedAgent().getId(),
+            "name", t.getAssignedAgent().getFullName()
+        ) : null);
+        m.put("createdAt",   t.getCreatedAt());
+        m.put("updatedAt",   t.getUpdatedAt());
+        m.put("resolvedAt",  t.getResolvedAt());
+        return m;
+    }
+
+    private Map<String, Object> commentToMap(TicketComment c) {
+        return Map.of(
+            "id",           c.getId(),
+            "body",         c.getBody(),
+            "internalNote", c.isInternalNote(),
+            "author",       c.getAuthor() != null ? c.getAuthor().getFullName() : "System",
+            "createdAt",    c.getCreatedAt()
+        );
+    }
+
+    private int slaHours(Ticket.TicketPriority p) {
+        return switch (p) {
+            case CRITICAL -> slaCritical;
+            case HIGH     -> slaHigh;
+            case MEDIUM   -> slaMedium;
+            default       -> slaLow;
+        };
+    }
+
+    private <E extends Enum<E>> E parseEnum(String val, Class<E> cls, E def) {
+        if (val == null || val.isBlank()) return def;
+        try { return Enum.valueOf(cls, val.toUpperCase()); }
+        catch (Exception e) { return def; }
+    }
+
+    private <E extends Enum<E>> E parseEnumNullable(String val, Class<E> cls) {
+        if (val == null || val.isBlank()) return null;
+        try { return Enum.valueOf(cls, val.toUpperCase()); }
+        catch (Exception e) { return null; }
+    }
+}
