@@ -357,11 +357,11 @@ spring.main.allow-circular-references=true
 
 | Member | Role | GitHub |
 |--------|------|--------|
-| **PRATIYUSH SHARMA** | Team Lead · Ticket Core · Billing NLP · Classify UI | [@username](https://github.com/sharmapratiyush02) |
-| **KRISHNA RENUSE** | Analytics · Resolution Predictor · Lookup Portal | [@username](https://github.com/Krishna1808) |
+| **PRATIYUSH SHARMA** | Team Lead · Ticket Core · Billing NLP · Classify UI | [@PRATIYUSH SHARMA](https://github.com/sharmapratiyush02) |
+| **KRISHNA RENUSE** | Analytics · Resolution Predictor · Lookup Portal | [@KRISHNA RENUSE](https://github.com/Krishna1808) |
 | **SOHAM SATPUTE** | Auth · Knowledge Base · Login UI · KB Search | [@username](https://github.com/Soham-Satpute) |
-| **YASH PATHRIKAR** | Tickets · Customer Portal · Sentiment NLP | [@username](https://github.com/yashpathrikar) |
-| **NEERAJ GUPTA** | Dashboard · Data Seeder · Critical NLP · Config | [@username](https://github.com/NeerajGupta18) |
+| **YASH PATHRIKAR** | Tickets · Customer Portal · Sentiment NLP | [@YASH PATHRIKAR](https://github.com/yashpathrikar) |
+| **NEERAJ GUPTA** | Dashboard · Data Seeder · Critical NLP · Config | [@NEERAJ SUDESH GUPTA](https://github.com/NeerajGupta18) |
 
 > B.Tech CSE AI & Data Science — Third Year | 2026
 
