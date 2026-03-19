@@ -3,16 +3,26 @@ backend/target/
 springmind-full/
 springmind-fullV2/
 
-# Frontend build output
+# Compiled Java
+backend/target/
+*.class
+
+# Frontend build and dependencies
 frontend/node_modules/
 frontend/dist/
 frontend/.env
 frontend/.env.local
+
+# Backend secrets — never commit real .env
+backend/.env
+.env
 
 # System files
 .DS_Store
 Thumbs.db
 *.iml
 .idea/
-*.class
+.vscode/settings.json
+
+# Logs
 *.log
