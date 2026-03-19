@@ -375,7 +375,7 @@ spring.main.allow-circular-references=true
 4. Push to the branch: `git push origin feat/your-feature`
 5. Open a Pull Request
 
-Please follow the commit convention: `type(scope): description`
+
 
 ---
 
