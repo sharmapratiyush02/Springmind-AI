@@ -1,0 +1,26 @@
+# Compiled Java — never commit these
+springmind-fullV2/backend/target/
+springmind-fullV2/backend/*.log
+
+# Frontend dependencies and build output
+springmind-fullV2/frontend/node_modules/
+springmind-fullV2/frontend/dist/
+springmind-fullV2/frontend/.env
+springmind-fullV2/frontend/.env.local
+
+# Backend secrets
+springmind-fullV2/backend/.env
+.env
+
+# Java compiled classes
+*.class
+
+# System files
+.DS_Store
+Thumbs.db
+*.iml
+.idea/
+.vscode/settings.json
+
+# Logs
+*.log
