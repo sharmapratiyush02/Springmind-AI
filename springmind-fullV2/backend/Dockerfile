@@ -1,11 +1,11 @@
-FROM eclipse-temurin:21-jdk-alpine
+FROM maven:3.9.6-eclipse-temurin-21-alpine AS build
 WORKDIR /app
-COPY . .
-RUN ./mvnw clean package -DskipTests
-EXPOSE 8080
-CMD ["java", "-jar", "target/ai-support-system-1.0.0.jar"]FROM eclipse-temurin:21-jdk-alpine
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package -DskipTests
+
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-COPY . .
-RUN ./mvnw clean package -DskipTests
+COPY --from=build /app/target/ai-support-system-1.0.0.jar app.jar
 EXPOSE 8080
-CMD ["java", "-jar", "target/ai-support-system-1.0.0.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
