@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpringMind — Customer Portal</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0d14;--surface:#111520;--surface2:#161c2b;--surface3:#1c2438;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#e8ecf4;--muted:#7a869a;
+  --accent:#4f8ef7;--accent2:#7c5cfc;--green:#2dd4a0;--amber:#f5a623;--red:#f25c5c;
+  --fh:'Syne',sans-serif;--fb:'Instrument Sans',sans-serif;--fm:'JetBrains Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);min-height:100vh;}
+/* Layout */
+.app{display:none;}
+.auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+/* Auth card */
+.auth-card{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:40px;width:420px;max-width:100%;}
+.auth-logo{text-align:center;margin-bottom:28px;}
+.auth-logo-icon{width:52px;height:52px;border-radius:14px;margin:0 auto 12px;background:linear-gradient(135deg,var(--accent2),var(--accent));display:flex;align-items:center;justify-content:center;font-size:26px;}
+.auth-title{font-family:var(--fh);font-size:26px;font-weight:800;margin-bottom:4px;}
+.auth-sub{font-size:13px;color:var(--muted);}
+.form-group{margin-bottom:14px;}
+label{display:block;font-size:11px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;}
+input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:10px 13px;color:var(--text);font-family:var(--fb);font-size:13px;outline:none;transition:border .2s;}
+input:focus{border-color:var(--accent);}
+input::placeholder{color:var(--muted);}
+.auth-btn{width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;font-family:var(--fh);font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .2s;}
+.auth-btn:hover{opacity:.9;}
+.auth-btn:disabled{opacity:.5;cursor:not-allowed;}
+.auth-switch{text-align:center;margin-top:16px;font-size:13px;color:var(--muted);}
+.auth-switch a{color:var(--accent);text-decoration:none;cursor:pointer;}
+.err{background:rgba(242,92,92,.1);border:1px solid rgba(242,92,92,.3);border-radius:8px;padding:10px 13px;color:var(--red);font-size:13px;margin-top:12px;display:none;}
+.err.show{display:block;}
+/* App layout */
+.app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;height:56px;display:flex;align-items:center;gap:14px;}
+.app-logo{display:flex;align-items:center;gap:9px;}
+.logo-icon{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--accent2),var(--accent));display:flex;align-items:center;justify-content:center;font-size:15px;}
+.logo-t{font-family:var(--fh);font-weight:700;font-size:14px;}
+.logo-s{font-size:10px;color:var(--muted);font-family:var(--fm);}
+.app-nav{display:flex;gap:2px;margin-left:24px;}
+.nav-btn{padding:6px 14px;border-radius:8px;background:none;border:none;color:var(--muted);font-family:var(--fb);font-size:13px;cursor:pointer;transition:all .15s;}
+.nav-btn:hover{background:var(--surface2);color:var(--text);}
+.nav-btn.active{background:rgba(79,142,247,.12);color:var(--accent);}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent2),var(--accent));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;}
+.user-name{font-size:13px;font-weight:500;}
+.logout-btn{padding:6px 12px;border-radius:8px;border:1px solid var(--border2);background:none;color:var(--muted);font-size:12px;cursor:pointer;transition:all .15s;}
+.logout-btn:hover{color:var(--red);border-color:rgba(242,92,92,.4);}
+/* Content */
+.app-content{padding:28px;max-width:900px;margin:0 auto;}
+/* Pages */
+.page{display:none;animation:fadeIn .2s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+/* Page title */
+.page-title{font-family:var(--fh);font-size:22px;font-weight:800;margin-bottom:6px;}
+.page-sub{font-size:13px;color:var(--muted);margin-bottom:24px;}
+/* Stats */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px;}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;}
+.stat-label{font-size:10px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;}
+.stat-val{font-family:var(--fh);font-size:28px;font-weight:800;letter-spacing:-1px;}
+/* Ticket cards */
+.ticket-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:12px;cursor:pointer;transition:all .15s;}
+.ticket-card:hover{border-color:var(--border2);background:var(--surface2);}
+.tc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
+.tc-num{font-family:var(--fm);font-size:11px;color:var(--muted);}
+.tc-title{font-size:15px;font-weight:500;margin-top:3px;}
+.tc-desc{font-size:13px;color:var(--muted);margin-top:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.tc-footer{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;}
+.tc-meta{font-size:11px;color:var(--muted);font-family:var(--fm);}
+/* Progress bar */
+.prog-wrap{margin-top:12px;}
+.prog-label{display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;}
+.prog-track{height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .6s;}
+/* Pills */
+.pill{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-family:var(--fm);}
+.p-open{background:rgba(79,142,247,.15);color:var(--accent);}
+.p-in_progress{background:rgba(245,166,35,.15);color:var(--amber);}
+.p-resolved,.p-closed{background:rgba(45,212,160,.15);color:var(--green);}
+.p-critical{background:rgba(242,92,92,.15);color:var(--red);}
+.p-high{background:rgba(245,166,35,.15);color:var(--amber);}
+.p-medium{background:rgba(79,142,247,.15);color:var(--accent);}
+.p-low{background:rgba(45,212,160,.15);color:var(--green);}
+.p-billing{background:rgba(124,92,252,.15);color:#a78df5;}
+.p-technical{background:rgba(79,142,247,.15);color:#7aabfa;}
+.p-account{background:rgba(45,212,160,.15);color:var(--green);}
+/* Detail panel */
+.detail-back{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;cursor:pointer;margin-bottom:20px;background:none;border:none;font-family:var(--fb);}
+.detail-back:hover{color:var(--text);}
+.detail-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;}
+/* AI insight */
+.ai-box{background:rgba(124,92,252,.06);border:1px solid rgba(124,92,252,.18);border-radius:12px;padding:16px;margin:18px 0;}
+.ai-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(124,92,252,.12);color:#a78df5;border:1px solid rgba(124,92,252,.25);border-radius:20px;padding:3px 11px;font-size:11px;font-family:var(--fm);margin-bottom:12px;}
+.ai-pulse{width:5px;height:5px;border-radius:50%;background:#7c5cfc;animation:pulse 1.8s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+/* Comments */
+.comment{background:var(--surface2);border-radius:10px;padding:13px;margin-bottom:10px;}
+.comment-author{font-size:12px;font-weight:500;margin-bottom:4px;}
+.comment-body{font-size:13px;color:var(--muted);line-height:1.7;}
+.comment-time{font-size:10px;color:var(--muted);font-family:var(--fm);margin-top:4px;}
+.comment.customer-msg{background:rgba(79,142,247,.07);border:1px solid rgba(79,142,247,.12);}
+/* Submit form */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;}
+textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:11px 13px;color:var(--text);font-family:var(--fb);font-size:13px;outline:none;resize:vertical;min-height:90px;line-height:1.6;transition:border .2s;}
+textarea:focus{border-color:var(--accent);}
+textarea::placeholder{color:var(--muted);}
+select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:10px 13px;color:var(--text);font-family:var(--fb);font-size:13px;outline:none;}
+select option{background:var(--surface);}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:9px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-family:var(--fb);font-size:13px;cursor:pointer;transition:all .15s;}
+.btn:hover{background:var(--surface3);}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn.primary{background:var(--accent);border-color:transparent;color:#fff;font-weight:500;}
+.btn.primary:hover{background:#3a7ae8;}
+/* Empty state */
+.empty{text-align:center;padding:60px 24px;color:var(--muted);}
+.empty-icon{font-size:48px;margin-bottom:14px;}
+.empty h3{font-family:var(--fh);font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;}
+/* Spinner */
+.spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Toast */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:12px 18px;border-radius:10px;font-size:13px;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,.5);font-family:var(--fm);transition:opacity .4s;}
+/* Responsive */
+@media(max-width:600px){.stats-row{grid-template-columns:1fr 1fr;}.app-nav{display:none;}}
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">🧠</div>
+      <div class="auth-title">Customer Portal</div>
+      <div class="auth-sub" id="authSub">Sign in to manage your support tickets</div>
+    </div>
+
+    <!-- Login Form -->
+    <div id="loginForm">
+      <div class="form-group"><label>Email</label><input type="email" id="loginEmail" placeholder="you@company.com"></div>
+      <div class="form-group"><label>Password</label><input type="password" id="loginPass" placeholder="Your password"></div>
+      <div class="err" id="loginErr"></div>
+      <button class="auth-btn" id="loginBtn" onclick="doLogin()">Sign In →</button>
+      <div class="auth-switch">No account? <a onclick="switchToRegister()">Create one free →</a></div>
+      <div class="auth-switch" style="margin-top:8px"><a href="track-ticket.html" style="color:var(--muted)">Just track a ticket without login →</a></div>
+    </div>
+
+    <!-- Register Form -->
+    <div id="registerForm" style="display:none">
+      <div class="form-group"><label>Full Name</label><input type="text" id="regName" placeholder="John Smith"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="regEmail" placeholder="you@company.com"></div>
+      <div class="form-group"><label>Password</label><input type="password" id="regPass" placeholder="Min. 6 characters"></div>
+      <div class="err" id="regErr"></div>
+      <button class="auth-btn" id="regBtn" onclick="doRegister()">Create Account →</button>
+      <div class="auth-switch">Already have an account? <a onclick="switchToLogin()">Sign in →</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="appShell">
+  <header class="app-header">
+    <div class="app-logo">
+      <div class="logo-icon">🧠</div>
+      <div><div class="logo-t">SpringMind</div><div class="logo-s">Customer Portal</div></div>
+    </div>
+    <nav class="app-nav">
+      <button class="nav-btn active" onclick="showPage('dashboard',this)">Dashboard</button>
+      <button class="nav-btn" onclick="showPage('tickets',this)">My Tickets</button>
+      <button class="nav-btn" onclick="showPage('submit',this)">+ New Ticket</button>
+    </nav>
+    <div class="header-right">
+      <div class="avatar" id="userAvatar">U</div>
+      <div class="user-name" id="userName">User</div>
+      <button class="logout-btn" onclick="doLogout()">Sign out</button>
+    </div>
+  </header>
+
+  <div class="app-content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-title">Welcome back, <span id="welcomeName">there</span> 👋</div>
+      <div class="page-sub">Here's an overview of your support requests.</div>
+
+      <div class="stats-row" id="dashStats"></div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-family:var(--fh);font-size:16px;font-weight:700">Recent Tickets</div>
+        <button class="btn" onclick="showPage('tickets',document.querySelectorAll('.nav-btn')[1])">View all →</button>
+      </div>
+      <div id="dashTickets"></div>
+    </div>
+
+    <!-- MY TICKETS -->
+    <div class="page" id="page-tickets">
+      <div class="page-title">My Tickets</div>
+      <div class="page-sub">All your support requests in one place.</div>
+      <div id="allTickets"></div>
+    </div>
+
+    <!-- TICKET DETAIL -->
+    <div class="page" id="page-detail">
+      <button class="detail-back" onclick="showPage('tickets',document.querySelectorAll('.nav-btn')[1])">← Back to tickets</button>
+      <div id="detailContent"></div>
+    </div>
+
+    <!-- SUBMIT TICKET -->
+    <div class="page" id="page-submit">
+      <div class="page-title">Submit a Support Request</div>
+      <div class="page-sub">Describe your issue and our AI will classify and route it automatically.</div>
+      <div class="panel" style="max-width:600px">
+        <div class="form-group" style="margin-bottom:16px">
+          <label>Subject / Title *</label>
+          <input type="text" id="subTitle" placeholder="Brief description of your issue">
+        </div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label>Detailed Description *</label>
+          <textarea id="subDesc" rows="5" placeholder="Please describe your issue in detail. The more information you provide, the faster we can help you."></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+          <div class="form-group">
+            <label>Category (optional — AI will detect)</label>
+            <select id="subCat">
+              <option value="">Auto-detect (recommended)</option>
+              <option value="BILLING">Billing</option>
+              <option value="TECHNICAL">Technical</option>
+              <option value="ACCOUNT">Account</option>
+              <option value="REFUND">Refund</option>
+              <option value="FEATURE_REQUEST">Feature Request</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Your Plan</label>
+            <select id="subTier">
+              <option value="FREE">Free</option>
+              <option value="BASIC">Basic</option>
+              <option value="PREMIUM">Premium</option>
+              <option value="ENTERPRISE">Enterprise</option>
+            </select>
+          </div>
+        </div>
+        <div class="err" id="subErr"></div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <button class="btn primary" id="subBtn" onclick="doSubmit()">🤖 AI Classify & Submit</button>
+          <span style="font-size:12px;color:var(--muted)">AI will auto-assign priority & route to the right team</span>
+        </div>
+        <div id="subResult"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:8080/api';
+let TOKEN = localStorage.getItem('cp_token');
+let USER  = JSON.parse(localStorage.getItem('cp_user') || 'null');
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+if (TOKEN && USER) showApp();
+else showAuth();
+
+function showAuth() {
+  document.getElementById('authScreen').style.display = 'flex';
+  document.getElementById('appShell').style.display = 'none';
+}
+
+function showApp() {
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('appShell').style.display = 'block';
+  const init = USER?.name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() || 'U';
+  document.getElementById('userAvatar').textContent = init;
+  document.getElementById('userName').textContent = USER?.name || 'User';
+  document.getElementById('welcomeName').textContent = USER?.name?.split(' ')[0] || 'there';
+  loadDashboard();
+}
+
+function switchToRegister() {
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('registerForm').style.display = 'block';
+  document.getElementById('authSub').textContent = 'Create your free customer account';
+}
+function switchToLogin() {
+  document.getElementById('registerForm').style.display = 'none';
+  document.getElementById('loginForm').style.display = 'block';
+  document.getElementById('authSub').textContent = 'Sign in to manage your support tickets';
+}
+
+// ── Auth ───────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+  const err   = document.getElementById('loginErr');
+  const btn   = document.getElementById('loginBtn');
+  err.classList.remove('show');
+  if (!email || !pass) { err.textContent='Please fill in all fields.'; err.classList.add('show'); return; }
+  btn.disabled=true; btn.innerHTML='<div class="spin"></div> Signing in…';
+  try {
+    const res  = await fetch(`${API}/customer/login`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email, password: pass})
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Invalid email or password');
+    TOKEN = data.accessToken; USER = data.user;
+    localStorage.setItem('cp_token', TOKEN);
+    localStorage.setItem('cp_user', JSON.stringify(USER));
+    showApp();
+  } catch(e) { err.textContent=e.message; err.classList.add('show'); }
+  finally { btn.disabled=false; btn.innerHTML='Sign In →'; }
+}
+
+async function doRegister() {
+  const name  = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass  = document.getElementById('regPass').value;
+  const err   = document.getElementById('regErr');
+  const btn   = document.getElementById('regBtn');
+  err.classList.remove('show');
+  if (!name||!email||!pass) { err.textContent='Please fill in all fields.'; err.classList.add('show'); return; }
+  if (pass.length < 6) { err.textContent='Password must be at least 6 characters.'; err.classList.add('show'); return; }
+  btn.disabled=true; btn.innerHTML='<div class="spin"></div> Creating account…';
+  try {
+    const res  = await fetch(`${API}/customer/register`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({fullName:name, email, password:pass})
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Registration failed');
+    TOKEN = data.accessToken; USER = data.user;
+    localStorage.setItem('cp_token', TOKEN);
+    localStorage.setItem('cp_user', JSON.stringify(USER));
+    showApp();
+  } catch(e) { err.textContent=e.message; err.classList.add('show'); }
+  finally { btn.disabled=false; btn.innerHTML='Create Account →'; }
+}
+
+function doLogout() {
+  localStorage.removeItem('cp_token'); localStorage.removeItem('cp_user');
+  TOKEN=null; USER=null; showAuth();
+}
+
+// ── API helper ─────────────────────────────────────────────────────────────
+async function apiFetch(path, opts={}) {
+  const res = await fetch(`${API}${path}`, {
+    ...opts,
+    headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${TOKEN}`, ...(opts.headers||{}) }
+  });
+  if (res.status===401) { doLogout(); return null; }
+  return res.json();
+}
+
+// ── Dashboard ──────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  const tickets = await apiFetch('/customer/my-tickets');
+  if (!tickets) return;
+
+  const open   = tickets.filter(t=>t.status==='OPEN').length;
+  const prog   = tickets.filter(t=>t.status==='IN_PROGRESS').length;
+  const res    = tickets.filter(t=>['RESOLVED','CLOSED'].includes(t.status)).length;
+  const total  = tickets.length;
+
+  document.getElementById('dashStats').innerHTML = [
+    {label:'Total Tickets', val:total, color:'var(--accent)'},
+    {label:'Open',          val:open,  color:'var(--amber)'},
+    {label:'In Progress',   val:prog,  color:'var(--accent2)'},
+    {label:'Resolved',      val:res,   color:'var(--green)'},
+  ].map(s=>`
+    <div class="stat">
+      <div class="stat-label">${s.label}</div>
+      <div class="stat-val" style="color:${s.color}">${s.val}</div>
+    </div>`).join('');
+
+  const recent = tickets.slice(0, 5);
+  document.getElementById('dashTickets').innerHTML = recent.length
+    ? recent.map(t => ticketCard(t)).join('')
+    : emptyState('No tickets yet', 'Click "New Ticket" to submit your first support request.', '🎉');
+}
+
+// ── Tickets page ───────────────────────────────────────────────────────────
+async function loadTickets() {
+  const tickets = await apiFetch('/customer/my-tickets');
+  if (!tickets) return;
+  document.getElementById('allTickets').innerHTML = tickets.length
+    ? tickets.map(t => ticketCard(t)).join('')
+    : emptyState('No tickets yet', 'Submit a new ticket to get support from our team.', '🎫');
+}
+
+function ticketCard(t) {
+  const sc = (t.status||'').toLowerCase().replace('_','-');
+  const pc = (t.priority||'').toLowerCase();
+  const cat = (t.category||'').toLowerCase().replace('_','');
+  const date = t.createdAt ? new Date(t.createdAt).toLocaleDateString() : '—';
+  return `
+    <div class="ticket-card" onclick="openDetail('${t.ticketNumber}')">
+      <div class="tc-top">
+        <div>
+          <div class="tc-num">${t.ticketNumber} · ${date}</div>
+          <div class="tc-title">${t.title}</div>
+        </div>
+        <span class="pill p-${sc}">${(t.status||'').replace('_',' ')}</span>
+      </div>
+      <div class="tc-desc">${t.description}</div>
+      <div class="tc-footer">
+        <span class="pill p-${pc}" style="font-size:10px">${t.priority}</span>
+        <span class="pill p-${cat}" style="font-size:10px">${(t.category||'—').replace('_',' ')}</span>
+        <span class="tc-meta">Agent: ${t.assignedAgent || 'Being assigned'}</span>
+        <span class="tc-meta" style="margin-left:auto">Est. ${t.predictedResolutionHours || '?'}h resolution</span>
+      </div>
+      <div class="prog-wrap">
+        <div class="prog-label">
+          <span style="font-size:11px;color:var(--muted)">${t.statusLabel || ''}</span>
+          <span style="font-size:11px;font-family:var(--fm);color:var(--accent)">${t.progressPercent || 0}%</span>
+        </div>
+        <div class="prog-track"><div class="prog-fill" style="width:${t.progressPercent||0}%"></div></div>
+      </div>
+    </div>`;
+}
+
+function emptyState(title, sub, icon) {
+  return `<div class="empty"><div class="empty-icon">${icon}</div><h3>${title}</h3><p>${sub}</p>
+    <button class="btn primary" style="margin-top:16px" onclick="showPage('submit',document.querySelectorAll('.nav-btn')[2])">Submit a Ticket</button></div>`;
+}
+
+// ── Ticket Detail ──────────────────────────────────────────────────────────
+async function openDetail(ticketNumber) {
+  showPage('detail', null);
+  document.getElementById('detailContent').innerHTML =
+    '<div style="padding:40px;text-align:center;color:var(--muted)"><div class="spin" style="margin:0 auto 10px;border-top-color:var(--accent)"></div>Loading…</div>';
+
+  const t = await apiFetch(`/customer/my-tickets/${ticketNumber}`);
+  if (!t) return;
+
+  const sc = (t.status||'').toLowerCase().replace('_','-');
+  const comments = (t.comments || []).map(c => {
+    const isCustomer = c.body?.startsWith('[Customer]');
+    return `<div class="comment ${isCustomer?'customer-msg':''}">
+      <div class="comment-author" style="color:${isCustomer?'var(--accent)':'var(--green)'}">${isCustomer?'You':'Support Team'}</div>
+      <div class="comment-body">${c.body?.replace('[Customer] ','')}</div>
+      <div class="comment-time">${new Date(c.createdAt).toLocaleString()}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('detailContent').innerHTML = `
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px">
+      <div>
+        <div style="font-family:var(--fm);font-size:12px;color:var(--muted)">${t.ticketNumber}</div>
+        <div style="font-family:var(--fh);font-size:22px;font-weight:700;margin-top:4px">${t.title}</div>
+      </div>
+      <span class="pill p-${sc}" style="font-size:12px;padding:5px 12px">${(t.status||'').replace('_',' ')}</span>
+    </div>
+
+    <div class="prog-wrap" style="margin-bottom:20px">
+      <div class="prog-label">
+        <span style="color:var(--muted)">${t.statusLabel}</span>
+        <span style="font-family:var(--fm);color:var(--accent)">${t.progressPercent}% complete</span>
+      </div>
+      <div class="prog-track" style="height:6px"><div class="prog-fill" style="width:${t.progressPercent}%"></div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+      ${[['Priority', `<span class="pill p-${(t.priority||'').toLowerCase()}">${t.priority}</span>`],
+         ['Category', (t.category||'—').replace('_',' ')],
+         ['Assigned To', t.assignedAgent || 'Being assigned'],
+         ['Submitted', t.createdAt ? new Date(t.createdAt).toLocaleString() : '—'],
+         ['SLA Deadline', t.slaDeadline ? new Date(t.slaDeadline).toLocaleString() : '—'],
+         ['Est. Resolution', t.predictedResolutionHours ? t.predictedResolutionHours+'h' : '—'],
+        ].map(([k,v])=>`
+        <div style="background:var(--surface2);border-radius:10px;padding:12px">
+          <div style="font-size:10px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px">${k}</div>
+          <div style="font-size:13px;font-weight:500">${v}</div>
+        </div>`).join('')}
+    </div>
+
+    <div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:20px">
+      <div style="font-size:11px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Description</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.8">${t.description}</div>
+    </div>
+
+    <div class="ai-box">
+      <div class="ai-badge"><div class="ai-pulse"></div>AI Analysis</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="font-size:13px"><span style="color:var(--muted)">Classification confidence: </span>${Math.round((t.aiConfidence||0)*100)}%</div>
+        <div style="font-size:13px"><span style="color:var(--muted)">Sentiment: </span>${t.sentiment||'—'}</div>
+      </div>
+    </div>
+
+    <div style="font-family:var(--fh);font-size:15px;font-weight:700;margin-bottom:14px">
+      Conversation ${t.comments?.length ? `(${t.comments.length})` : ''}
+    </div>
+    ${comments || '<div style="color:var(--muted);font-size:13px;margin-bottom:16px">No messages yet — we\'ll reply here soon.</div>'}
+
+    <div style="margin-top:20px">
+      <label>Your Reply</label>
+      <textarea id="replyText" rows="3" placeholder="Type your reply…" style="margin-top:6px;margin-bottom:10px"></textarea>
+      <div style="display:flex;gap:10px">
+        <button class="btn primary" onclick="sendReply('${t.ticketNumber}')">Send Reply</button>
+        ${t.status==='RESOLVED'?`<button class="btn" onclick="sendReply('${t.ticketNumber}')">Reopen & Reply</button>`:''}
+      </div>
+    </div>`;
+}
+
+async function sendReply(ticketNumber) {
+  const msg = document.getElementById('replyText').value.trim();
+  if (!msg) return;
+  const res = await apiFetch(`/customer/my-tickets/${ticketNumber}/reply`, {
+    method:'POST', body: JSON.stringify({message: msg})
+  });
+  if (res) { showToast('Reply sent ✓'); openDetail(ticketNumber); }
+}
+
+// ── Submit ticket ──────────────────────────────────────────────────────────
+async function doSubmit() {
+  const title = document.getElementById('subTitle').value.trim();
+  const desc  = document.getElementById('subDesc').value.trim();
+  const cat   = document.getElementById('subCat').value;
+  const tier  = document.getElementById('subTier').value;
+  const err   = document.getElementById('subErr');
+  const btn   = document.getElementById('subBtn');
+
+  err.classList.remove('show');
+  if (!title||!desc) { err.textContent='Please fill in title and description.'; err.classList.add('show'); return; }
+
+  btn.disabled=true; btn.innerHTML='<div class="spin"></div> AI is analyzing…';
+  try {
+    const res = await apiFetch('/customer/submit', {
+      method:'POST', body: JSON.stringify({title, description:desc, category:cat||null, customerTier:tier})
+    });
+    if (!res) return;
+    if (res.message?.includes('error') || res.status >= 400) throw new Error(res.message);
+
+    document.getElementById('subResult').innerHTML = `
+      <div style="margin-top:20px;background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.25);border-radius:12px;padding:18px">
+        <div style="font-size:18px;margin-bottom:8px">✅ Ticket Submitted!</div>
+        <div style="font-family:var(--fm);font-size:13px;color:var(--green);margin-bottom:10px">${res.ticketNumber}</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.7">${res.message}</div>
+        <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+          <span class="pill p-${(res.priority||'').toLowerCase()}">${res.priority}</span>
+          <span class="pill" style="background:var(--surface3);color:var(--muted)">${(res.category||'').replace('_',' ')}</span>
+        </div>
+        <button class="btn" style="margin-top:14px" onclick="showPage('tickets',document.querySelectorAll('.nav-btn')[1]);loadTickets()">View My Tickets →</button>
+      </div>`;
+    document.getElementById('subTitle').value='';
+    document.getElementById('subDesc').value='';
+  } catch(e) { err.textContent=e.message||'Submission failed'; err.classList.add('show'); }
+  finally { btn.disabled=false; btn.innerHTML='🤖 AI Classify & Submit'; }
+}
+
+// ── Navigation ─────────────────────────────────────────────────────────────
+function showPage(id, navEl) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  if (navEl) navEl.classList.add('active');
+  if (id==='tickets') loadTickets();
+  if (id==='dashboard') loadDashboard();
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t=document.createElement('div');
+  t.className='toast'; t.textContent=msg; document.body.appendChild(t);
+  setTimeout(()=>t.style.opacity='0',2500); setTimeout(()=>t.remove(),3000);
+}
+
+// Check if URL has #register
+if (window.location.hash==='#register') switchToRegister();
+</script>
+</body>
+</html>

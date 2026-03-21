@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpringMind — Track Your Ticket</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0d14;--surface:#111520;--surface2:#161c2b;--border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
+  --text:#e8ecf4;--muted:#7a869a;--accent:#4f8ef7;--accent2:#7c5cfc;--green:#2dd4a0;--amber:#f5a623;--red:#f25c5c;
+  --fh:'Syne',sans-serif;--fb:'Instrument Sans',sans-serif;--fm:'JetBrains Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);min-height:100vh;display:flex;flex-direction:column;}
+/* Header */
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;justify-content:space-between;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-icon{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--accent2),var(--accent));display:flex;align-items:center;justify-content:center;font-size:18px;}
+.logo-text{font-family:var(--fh);font-weight:700;font-size:17px;}
+.logo-sub{font-size:11px;color:var(--muted);font-family:var(--fm);}
+.header-links{display:flex;gap:8px;}
+.hbtn{padding:7px 14px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-family:var(--fb);font-size:13px;cursor:pointer;text-decoration:none;transition:all .15s;}
+.hbtn:hover{color:var(--text);background:var(--surface2);}
+.hbtn.primary{background:var(--accent);border-color:transparent;color:#fff;}
+.hbtn.primary:hover{background:#3a7ae8;}
+/* Hero */
+.hero{text-align:center;padding:64px 24px 40px;}
+.hero-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(79,142,247,.1);color:var(--accent);border:1px solid rgba(79,142,247,.25);border-radius:20px;padding:5px 14px;font-size:12px;font-family:var(--fm);margin-bottom:24px;}
+.hero h1{font-family:var(--fh);font-size:42px;font-weight:800;letter-spacing:-1.5px;margin-bottom:14px;background:linear-gradient(135deg,var(--text),var(--muted));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.hero p{font-size:15px;color:var(--muted);max-width:480px;margin:0 auto 36px;line-height:1.7;}
+/* Lookup Card */
+.card{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:36px;max-width:480px;margin:0 auto;width:100%;}
+.form-group{margin-bottom:18px;}
+label{display:block;font-size:11px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
+input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:var(--fb);font-size:14px;outline:none;transition:border .2s;}
+input:focus{border-color:var(--accent);}
+input::placeholder{color:var(--muted);}
+.submit-btn{width:100%;padding:13px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;font-family:var(--fh);font-size:15px;font-weight:700;cursor:pointer;transition:opacity .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;}
+.submit-btn:hover{opacity:.9;}
+.submit-btn:disabled{opacity:.5;cursor:not-allowed;}
+.hint{text-align:center;font-size:12px;color:var(--muted);font-family:var(--fm);margin-top:14px;}
+.hint a{color:var(--accent);text-decoration:none;}
+/* Result */
+.result{margin-top:28px;display:none;}
+.result.show{display:block;animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.ticket-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+.ticket-num{font-family:var(--fm);font-size:13px;color:var(--muted);}
+.ticket-title{font-family:var(--fh);font-size:20px;font-weight:700;margin-top:4px;}
+/* Status timeline */
+.timeline{margin:22px 0;position:relative;}
+.timeline::before{content:'';position:absolute;left:15px;top:0;bottom:0;width:2px;background:var(--border);}
+.tl-step{display:flex;align-items:flex-start;gap:14px;margin-bottom:18px;position:relative;}
+.tl-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;z-index:1;border:2px solid var(--border);}
+.tl-dot.done{background:var(--green);border-color:var(--green);}
+.tl-dot.active{background:var(--accent);border-color:var(--accent);animation:pulse 1.5s infinite;}
+.tl-dot.pending{background:var(--surface2);border-color:var(--border2);}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(79,142,247,.4)}50%{box-shadow:0 0 0 8px rgba(79,142,247,0)}}
+.tl-label{font-size:13px;font-weight:500;margin-top:5px;}
+.tl-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+/* Info grid */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;}
+.info-item{background:var(--surface2);border-radius:10px;padding:12px 14px;}
+.info-label{font-size:10px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;}
+.info-value{font-size:13px;font-weight:500;}
+/* Progress bar */
+.progress-wrap{margin:16px 0;}
+.progress-track{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-top:6px;}
+.progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .8s ease;}
+/* Pills */
+.pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-family:var(--fm);font-weight:500;}
+.pill-open{background:rgba(79,142,247,.15);color:var(--accent);}
+.pill-in_progress{background:rgba(245,166,35,.15);color:var(--amber);}
+.pill-resolved,.pill-closed{background:rgba(45,212,160,.15);color:var(--green);}
+.pill-critical{background:rgba(242,92,92,.15);color:var(--red);}
+.pill-high{background:rgba(245,166,35,.15);color:var(--amber);}
+.pill-medium{background:rgba(79,142,247,.15);color:var(--accent);}
+.pill-low{background:rgba(45,212,160,.15);color:var(--green);}
+/* Error */
+.error-box{background:rgba(242,92,92,.1);border:1px solid rgba(242,92,92,.3);border-radius:10px;padding:12px 16px;color:var(--red);font-size:13px;margin-top:14px;display:none;}
+.error-box.show{display:block;}
+/* Spinner */
+.spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Footer */
+footer{margin-top:auto;padding:24px;text-align:center;font-size:12px;color:var(--muted);border-top:1px solid var(--border);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🧠</div>
+    <div>
+      <div class="logo-text">SpringMind AI</div>
+      <div class="logo-sub">Support Platform</div>
+    </div>
+  </div>
+  <div class="header-links">
+    <a href="customer-portal.html" class="hbtn">My Account</a>
+    <a href="customer-portal.html#register" class="hbtn primary">Create Account →</a>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-badge">🔍 No login required</div>
+  <h1>Track Your Support Ticket</h1>
+  <p>Enter your email and ticket number to instantly see the status and progress of your support request.</p>
+
+  <div class="card">
+    <div class="form-group">
+      <label>Your Email Address</label>
+      <input type="email" id="emailInp" placeholder="you@company.com">
+    </div>
+    <div class="form-group">
+      <label>Ticket Number</label>
+      <input type="text" id="ticketInp" placeholder="e.g. TKT-1001" style="font-family:var(--fm);text-transform:uppercase;">
+    </div>
+    <button class="submit-btn" id="lookupBtn" onclick="doLookup()">
+      🔍 Track My Ticket
+    </button>
+    <div class="error-box" id="errorBox"></div>
+    <p class="hint">Don't have a ticket? <a href="customer-portal.html">Create an account</a> to submit one.</p>
+
+    <div class="result" id="result"></div>
+  </div>
+</div>
+
+<footer>
+  © 2024 SpringMind AI Support Platform · <a href="customer-portal.html" style="color:var(--accent)">Customer Portal</a>
+</footer>
+
+<script>
+const API = 'http://localhost:8080/api';
+
+async function doLookup() {
+  const email  = document.getElementById('emailInp').value.trim();
+  const ticket = document.getElementById('ticketInp').value.trim().toUpperCase();
+  const errBox = document.getElementById('errorBox');
+  const result = document.getElementById('result');
+  const btn    = document.getElementById('lookupBtn');
+
+  errBox.classList.remove('show');
+  result.classList.remove('show');
+
+  if (!email || !ticket) {
+    errBox.textContent = 'Please enter both your email and ticket number.';
+    errBox.classList.add('show'); return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spin"></div> Looking up…';
+
+  try {
+    const res  = await fetch(`${API}/customer/lookup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticketNumber: ticket, email })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Ticket not found');
+    renderResult(data);
+  } catch (e) {
+    errBox.textContent = e.message;
+    errBox.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🔍 Track My Ticket';
+  }
+}
+
+function renderResult(t) {
+  const statusClass = (t.status || '').toLowerCase().replace('_','-');
+  const priClass    = (t.priority || '').toLowerCase();
+
+  const steps = [
+    { label: 'Ticket Received',  sub: 'Your request was submitted', done: true },
+    { label: 'Under Review',     sub: 'Support team reviewing your issue', done: ['IN_PROGRESS','RESOLVED','CLOSED'].includes(t.status) },
+    { label: 'In Progress',      sub: t.assignedAgent !== 'Being assigned' ? `Assigned to ${t.assignedAgent}` : 'Agent being assigned', done: ['RESOLVED','CLOSED'].includes(t.status), active: t.status === 'IN_PROGRESS' },
+    { label: 'Resolved',         sub: t.resolvedAt ? new Date(t.resolvedAt).toLocaleString() : 'Pending resolution', done: ['RESOLVED','CLOSED'].includes(t.status) },
+  ];
+
+  const tlHTML = steps.map(s => `
+    <div class="tl-step">
+      <div class="tl-dot ${s.done ? 'done' : s.active ? 'active' : 'pending'}">${s.done ? '✓' : s.active ? '●' : '○'}</div>
+      <div>
+        <div class="tl-label" style="color:${s.done || s.active ? 'var(--text)' : 'var(--muted)'}">${s.label}</div>
+        <div class="tl-sub">${s.sub}</div>
+      </div>
+    </div>`).join('');
+
+  const sla = t.slaDeadline ? new Date(t.slaDeadline).toLocaleString() : '—';
+  const created = t.createdAt ? new Date(t.createdAt).toLocaleString() : '—';
+
+  document.getElementById('result').innerHTML = `
+    <hr style="border:none;border-top:1px solid var(--border);margin-bottom:22px">
+    <div class="ticket-header">
+      <div>
+        <div class="ticket-num">${t.ticketNumber}</div>
+        <div class="ticket-title">${t.title}</div>
+      </div>
+      <span class="pill pill-${statusClass}">${t.status?.replace('_',' ')}</span>
+    </div>
+
+    <div class="progress-wrap">
+      <div style="display:flex;justify-content:space-between;font-size:12px">
+        <span style="color:var(--muted)">Progress</span>
+        <span style="font-family:var(--fm);color:var(--accent)">${t.progressPercent}%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:${t.progressPercent}%"></div></div>
+    </div>
+
+    <div style="background:rgba(79,142,247,.07);border:1px solid rgba(79,142,247,.15);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);margin-bottom:18px">
+      📋 ${t.statusLabel}
+    </div>
+
+    <div class="timeline">${tlHTML}</div>
+
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="info-label">Priority</div>
+        <div class="info-value"><span class="pill pill-${priClass}">${t.priority}</span></div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Category</div>
+        <div class="info-value">${t.category?.replace('_',' ') || '—'}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Assigned Agent</div>
+        <div class="info-value">${t.assignedAgent}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Est. Resolution</div>
+        <div class="info-value">${t.predictedResolutionHours ? t.predictedResolutionHours + 'h' : '—'}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Submitted</div>
+        <div class="info-value" style="font-size:12px">${created}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">SLA Deadline</div>
+        <div class="info-value" style="font-size:12px">${sla}</div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;padding:14px;background:var(--surface2);border-radius:10px;">
+      <div style="font-size:11px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Issue Description</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.7">${t.description}</div>
+    </div>
+
+    <div style="margin-top:16px;text-align:center">
+      <a href="customer-portal.html" style="color:var(--accent);font-size:13px;text-decoration:none">
+        Create an account to reply and manage all your tickets →
+      </a>
+    </div>
+  `;
+  document.getElementById('result').classList.add('show');
+}
+
+// Allow Enter key
+document.addEventListener('keydown', e => { if(e.key==='Enter') doLookup(); });
+</script>
+</body>
+</html>
