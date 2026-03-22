@@ -13,10 +13,32 @@
 [![Java](https://img.shields.io/badge/Java-21-ED8B00?style=flat-square&logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://reactjs.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Production-336791?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Railway](https://img.shields.io/badge/Deployed%20on-Railway-0B0D0E?style=flat-square&logo=railway&logoColor=white)](https://railway.app/)
+[![Render](https://img.shields.io/badge/Backend-Render-46E3B7?style=flat-square&logo=render&logoColor=white)](https://render.com)
+[![Vercel](https://img.shields.io/badge/Frontend-Vercel-000000?style=flat-square&logo=vercel&logoColor=white)](https://vercel.com)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 
 </div>
+
+---
+
+## 🌐 Live Demo
+
+| Page | URL |
+|------|-----|
+| 🖥️ **Admin / Agent Dashboard** | [https://springmind-ai.vercel.app](https://springmind-ai.vercel.app) |
+| 👤 **Customer Portal** | [https://springmind-ai.vercel.app/customer-portal.html](https://springmind-ai.vercel.app/customer-portal.html) |
+| 🔍 **Track Ticket (No Login)** | [https://springmind-ai.vercel.app/track-ticket.html](https://springmind-ai.vercel.app/track-ticket.html) |
+| ⚙️ **Backend API Docs (Swagger)** | [https://springmind-backend.onrender.com/api/swagger-ui/index.html](https://springmind-backend.onrender.com/api/swagger-ui/index.html) |
+
+> ⚠️ **Note:** The backend is hosted on Render's free tier and may take **30–50 seconds to wake up** after a period of inactivity. Please wait for the first login to complete.
+
+### 🔑 Demo Credentials
+
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@springmind.ai | Admin@123 |
+| Agent (Billing) | priya@springmind.ai | Agent@123 |
+| Agent (Technical) | amit@springmind.ai | Agent@123 |
 
 ---
 
@@ -83,10 +105,11 @@ The platform is built for three types of users — **Admins**, **Support Agents*
 | Spring Security | 6.x | Authentication & authorisation |
 | Spring Data JPA | 3.x | Database ORM |
 | H2 Database | — | Local development (in-memory) |
-| PostgreSQL | 15+ | Production database |
+| PostgreSQL | 17 | Production database |
 | JWT (JJWT) | 0.12.5 | Token-based auth |
 | Lombok | 1.18.36 | Boilerplate reduction |
 | Maven | 3.x | Build tool |
+| Docker | — | Containerisation for deployment |
 
 ### Frontend
 | Technology | Version | Purpose |
@@ -100,13 +123,13 @@ The platform is built for three types of users — **Admins**, **Support Agents*
 ### Infrastructure
 | Service | Purpose |
 |---------|---------|
-| Railway | Backend hosting + PostgreSQL |
+| Render | Backend hosting (Docker) + PostgreSQL 17 |
 | Vercel | Frontend hosting |
 | GitHub | Version control & collaboration |
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Getting Started (Local Development)
 
 ### Prerequisites
 - Java 21 (Eclipse Adoptium recommended)
@@ -116,20 +139,20 @@ The platform is built for three types of users — **Admins**, **Support Agents*
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/YourUsername/springmind-ai.git
-cd springmind-ai
+git clone https://github.com/sharmapratiyush02/Springmind-AI.git
+cd Springmind-AI/springmind-fullV2
 ```
 
 ### 2. Run the Backend
 
-**Windows — set Java 21 first:**
-```bash
-set JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot
-set PATH=%JAVA_HOME%\bin;%PATH%
+**Windows — set Java 21 first (PowerShell):**
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot"
+$env:PATH = "$env:JAVA_HOME\bin;$env:PATH"
 java -version   # must show 21
 ```
 
-```bash
+```powershell
 cd backend
 mvn spring-boot:run
 ```
@@ -150,57 +173,109 @@ npm install
 npm run dev
 ```
 
-Frontend runs on: `http://localhost:5173`
+Frontend runs on: `http://localhost:3000`
 
 ---
 
-## 🔑 Demo Credentials
-
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@springmind.ai | Admin@123 |
-| Agent (Billing) | priya@springmind.ai | Agent@123 |
-| Agent (Technical) | amit@springmind.ai | Agent@123 |
-
----
-
-## 🌐 Application URLs
+## 🌐 Local Application URLs
 
 | URL | Description |
 |-----|-------------|
-| `http://localhost:5173` | Admin / Agent Dashboard |
-| `http://localhost:5173/track-ticket.html` | Customer ticket lookup (no login) |
-| `http://localhost:5173/customer-portal.html` | Full customer account portal |
+| `http://localhost:3000` | Admin / Agent Dashboard |
+| `http://localhost:3000/track-ticket.html` | Customer ticket lookup (no login) |
+| `http://localhost:3000/customer-portal.html` | Full customer account portal |
 | `http://localhost:8080/api/swagger-ui.html` | Interactive API documentation |
 | `http://localhost:8080/api/h2-console` | Database console (dev only) |
+
+---
+
+## ☁️ Deployment
+
+### Backend — Render (Docker)
+
+The backend is containerised using Docker and deployed on Render with PostgreSQL 17.
+
+**Deployed by:** Member 1 (Pratiyush) · Member 2 (Krishna) · Member 3 (Soham)
+
+**Dockerfile:**
+```dockerfile
+FROM maven:3.9.6-eclipse-temurin-21-alpine AS build
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package -DskipTests
+
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY --from=build /app/target/ai-support-system-1.0.0.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+
+**Environment Variables (Render):**
+```properties
+SPRING_PROFILES_ACTIVE=production
+DATABASE_URL=jdbc:postgresql://<host>:5432/<dbname>?user=<user>&password=<password>
+JWT_SECRET=<your-32-char-secret>
+DDL_AUTO=update
+EMAIL_ENABLED=false
+CORS_ORIGINS=https://springmind-ai.vercel.app,http://localhost:3000
+```
+
+**Live Backend:** `https://springmind-backend.onrender.com`
+
+---
+
+### Frontend — Vercel
+
+The React frontend is deployed on Vercel with automatic deployments on every push to `main`.
+
+**Deployed by:** Member 1 (Pratiyush) · Member 4 (Yash) · Member 5 (Neeraj)
+
+**Vercel Settings:**
+| Setting | Value |
+|---------|-------|
+| Root Directory | `springmind-fullV2/frontend` |
+| Framework Preset | Vite |
+| Build Command | `npm run build` |
+| Output Directory | `dist` |
+
+**Environment Variables (Vercel):**
+```env
+VITE_API_URL=https://springmind-backend.onrender.com/api
+```
+
+**Live Frontend:** `https://springmind-ai.vercel.app`
 
 ---
 
 ## 📁 Project Structure
 
 ```
-springmind-ai/
+springmind-fullV2/
 ├── backend/
+│   ├── Dockerfile                   # Docker config for Render deployment
 │   ├── src/main/java/com/springmind/ai/
-│   │   ├── config/              # Security, JWT, DataSeeder
-│   │   ├── controller/          # REST API controllers
-│   │   ├── model/               # JPA entities
-│   │   ├── repository/          # Spring Data repositories
-│   │   ├── service/             # Business logic + NLP engine
-│   │   └── exception/           # Global exception handling
+│   │   ├── config/                  # Security, JWT, DataSeeder
+│   │   ├── controller/              # REST API controllers
+│   │   ├── model/                   # JPA entities
+│   │   ├── repository/              # Spring Data repositories
+│   │   ├── service/                 # Business logic + NLP engine
+│   │   └── exception/               # Global exception handling
 │   ├── src/main/resources/
-│   │   └── application.properties
+│   │   ├── application.properties
+│   │   └── application-production.properties
 │   └── pom.xml
 │
 ├── frontend/
 │   ├── public/
-│   │   ├── customer-portal.html # Full customer account portal
-│   │   └── track-ticket.html    # No-login ticket lookup
+│   │   ├── customer-portal.html     # Full customer account portal
+│   │   └── track-ticket.html        # No-login ticket lookup
 │   ├── src/
-│   │   ├── components/          # Layout, shared components
-│   │   ├── context/             # Auth context
-│   │   ├── pages/               # Dashboard, Tickets, Analytics, AI Tools, Login
-│   │   └── services/            # API service layer (auth, tickets, AI, analytics)
+│   │   ├── components/              # Layout, shared components
+│   │   ├── context/                 # Auth context
+│   │   ├── pages/                   # Dashboard, Tickets, Analytics, AI Tools, Login
+│   │   └── services/                # API service layer (auth, tickets, AI, analytics)
 │   ├── vite.config.js
 │   └── package.json
 │
@@ -222,9 +297,9 @@ POST   /api/auth/register           Register new agent account
 GET    /api/tickets                 List all tickets (with filters)
 POST   /api/tickets                 Create new ticket
 GET    /api/tickets/{id}            Get ticket details
-PUT    /api/tickets/{id}            Update ticket status / assignment
+PATCH  /api/tickets/{id}            Update ticket status / assignment
 POST   /api/tickets/{id}/comments   Add comment to ticket
-GET    /api/tickets/stats/dashboard Dashboard stats summary
+GET    /api/tickets/dashboard/stats Dashboard stats summary
 ```
 
 ### AI Tools
@@ -287,28 +362,11 @@ Input Text
 Classification Result with Confidence Score
 ```
 
-The engine is trained on domain-specific keyword dictionaries and scoring heuristics, achieving **94.3% classification accuracy** across 5 categories. The model can be swapped with a BERT-based model in a future phase.
+The engine is trained on domain-specific keyword dictionaries and scoring heuristics, achieving **94.3% classification accuracy** across 5 categories.
 
 ---
 
 ## ⚙️ Configuration
-
-### Environment Variables (Production)
-
-**Backend (Railway):**
-```properties
-JWT_SECRET=your-32-char-minimum-secret-key
-DATABASE_URL=postgresql://...
-DB_USERNAME=postgres
-DB_PASSWORD=your-db-password
-CORS_ORIGINS=https://your-frontend.vercel.app
-SPRING_PROFILES_ACTIVE=production
-```
-
-**Frontend (Vercel):**
-```env
-VITE_API_URL=https://your-backend.up.railway.app/api
-```
 
 ### Local Development (`application.properties`)
 ```properties
@@ -334,6 +392,8 @@ spring.main.allow-circular-references=true
 - [x] Knowledge base recommender
 - [x] Agent performance tracking
 - [x] SLA management and breach detection
+- [x] Docker containerisation
+- [x] Production deployment on Render + Vercel
 
 ### 🔄 Phase 2 — Quality and Performance (Upcoming)
 - [ ] Real ML model via Python FastAPI microservice (BERT-based)
@@ -355,13 +415,13 @@ spring.main.allow-circular-references=true
 
 ## 👨‍💻 Team
 
-| Member | Role | GitHub |
-|--------|------|--------|
-| **PRATIYUSH SHARMA** | Team Lead · Ticket Core · Billing NLP · Classify UI | [@PRATIYUSH SHARMA](https://github.com/sharmapratiyush02) |
-| **KRISHNA RENUSE** | Analytics · Resolution Predictor · Lookup Portal | [@Krishna1808](https://github.com/Krishna1808) |
-| **SOHAM SATPUTE** | Auth · Knowledge Base · Login UI · KB Search | [@Soham Satpute](https://github.com/Soham-Satpute) |
-| **YASH PATHRIKAR** | Tickets · Customer Portal · Sentiment NLP | [@yashpathrikar](https://github.com/yashpathrikar) |
-| **NEERAJ GUPTA** | Dashboard · Data Seeder · Critical NLP · Config | [@Neeraj Sudesh Gupta](https://github.com/NeerajGupta18) |
+| Member | Role | Contributions | GitHub |
+|--------|------|--------------|--------|
+| **Pratiyush Sharma** | Team Lead | Ticket Core · Billing NLP · Classify UI · **Backend + Frontend Deployment** | [@sharmapratiyush02](https://github.com/sharmapratiyush02) |
+| **Krishna Renuse** | Backend Dev | Analytics · Resolution Predictor · Lookup Portal · **Backend Deployment** | [@Krishna1808](https://github.com/Krishna1808) |
+| **Soham Satpute** | Backend Dev | Auth · Knowledge Base · Login UI · KB Search · **Backend Deployment** | [@Soham-Satpute](https://github.com/Soham-Satpute) |
+| **Yash Pathrikar** | Frontend Dev | Tickets · Customer Portal · Sentiment NLP · **Frontend Deployment** | [@yashpathrikar](https://github.com/yashpathrikar) |
+| **Neeraj Gupta** | Frontend Dev | Dashboard · Data Seeder · Critical NLP · Config · **Frontend Deployment** | [@NeerajGupta18](https://github.com/NeerajGupta18) |
 
 > B.Tech CSE AI & Data Science — Third Year | 2026
 
@@ -374,8 +434,6 @@ spring.main.allow-circular-references=true
 3. Commit your changes: `git commit -m 'feat(scope): add your feature'`
 4. Push to the branch: `git push origin feat/your-feature`
 5. Open a Pull Request
-
-
 
 ---
 
