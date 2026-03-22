@@ -437,15 +437,10 @@ spring.main.allow-circular-references=true
 
 ---
 
-## 📄 License
-
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
-
----
 
 <div align="center">
 
-Built with ❤️ by Team SpringMind AI · B.Tech CSE AI&DS · 2026
+Built by Team SpringMind AI · B.Tech CSE AI&DS · 2026
 
 ⭐ Star this repo if you found it helpful!
 
