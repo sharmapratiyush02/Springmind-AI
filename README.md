@@ -15,7 +15,6 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Production-336791?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Render](https://img.shields.io/badge/Backend-Render-46E3B7?style=flat-square&logo=render&logoColor=white)](https://render.com)
 [![Vercel](https://img.shields.io/badge/Frontend-Vercel-000000?style=flat-square&logo=vercel&logoColor=white)](https://vercel.com)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 
 </div>
 
