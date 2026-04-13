@@ -221,14 +221,13 @@ public class CustomerPortalController {
             req.getCustomerTier(), req.getCategory(),
             null, "WEB_FORM"
         );
-        return ResponseEntity.status(201).body(Map.of(
-            "message",      "Ticket submitted successfully. We'll respond within " + ticket.getPredictedResolutionHours() + " hours.",
-            "ticketNumber", ticket.getTicketNumber(),
-            "priority",     ticket.getPriority(),
-            "category",     ticket.getCategory(),
-            "slaDeadline",  ticket.getSlaDeadline()
-        ));
-    }
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("message",      "Ticket submitted successfully. Our team will respond within " + ticket.getPredictedResolutionHours() + " hours.");
+        response.put("ticketNumber", ticket.getTicketNumber());
+        response.put("priority",     ticket.getPriority()  != null ? ticket.getPriority().name()  : "MEDIUM");
+        response.put("category",     ticket.getCategory()  != null ? ticket.getCategory().name()  : "TECHNICAL");
+        response.put("slaDeadline",  ticket.getSlaDeadline() != null ? ticket.getSlaDeadline().toString() : "");
+        return ResponseEntity.status(201).body(response);    }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
