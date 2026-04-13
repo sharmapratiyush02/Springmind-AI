@@ -50,14 +50,27 @@ public class SecurityConfig {
             .cors(c -> c.configurationSource(corsSource()))
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(a -> a
+                // ── Public endpoints ──────────────────────────────────────
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/tickets").permitAll()
-                .requestMatchers("/customer/lookup", "/customer/login", "/customer/register").permitAll()
-                .requestMatchers(HttpMethod.GET, "/customer/tickets/**").permitAll()
-                .requestMatchers("/customer/submit", "/customer/my-tickets/**").authenticated()
+
+                // ── Customer portal — ALL permitAll ───────────────────────
+                // Security is enforced inside each method via extractEmail(authHeader)
+                // which throws if the JWT is missing or invalid
+                .requestMatchers(HttpMethod.POST, "/customer/register").permitAll()
+                .requestMatchers(HttpMethod.POST, "/customer/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/customer/lookup").permitAll()
+                .requestMatchers(HttpMethod.GET,  "/customer/tickets/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/customer/submit").permitAll()
+                .requestMatchers(HttpMethod.GET,  "/customer/my-tickets").permitAll()
+                .requestMatchers(HttpMethod.GET,  "/customer/my-tickets/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/customer/my-tickets/**").permitAll()
+                .requestMatchers("/customer/**").permitAll()
+
+                // ── Everything else requires JWT ──────────────────────────
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class)
