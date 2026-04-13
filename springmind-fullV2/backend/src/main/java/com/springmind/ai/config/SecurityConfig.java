@@ -57,6 +57,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/tickets").permitAll()
                 .requestMatchers("/customer/lookup", "/customer/login", "/customer/register").permitAll()
                 .requestMatchers(HttpMethod.GET, "/customer/tickets/**").permitAll()
+                .requestMatchers("/customer/submit", "/customer/my-tickets/**").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class)
