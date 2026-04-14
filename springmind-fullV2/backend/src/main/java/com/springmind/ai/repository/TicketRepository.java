@@ -17,15 +17,22 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     Optional<Ticket> findByTicketNumber(String ticketNumber);
 
+    // ── ADDED: Used by TicketService.generateTicketNumber() ──────────────────
+    // Finds the ticket with the highest ticketNumber so we can increment from it.
+    // This replaces the static AtomicLong COUNTER which reset to 1000 on every
+    // server restart, causing duplicate key violations in PostgreSQL.
+    Optional<Ticket> findTopByOrderByTicketNumberDesc();
+
     Page<Ticket> findByStatus(Ticket.TicketStatus status, Pageable pageable);
     Page<Ticket> findByPriority(Ticket.TicketPriority priority, Pageable pageable);
     Page<Ticket> findByCategory(Ticket.TicketCategory category, Pageable pageable);
     Page<Ticket> findByAssignedAgentId(Long agentId, Pageable pageable);
 
-    // Customer-facing queries
+    // ── Customer-facing queries ───────────────────────────────────────────────
     List<Ticket> findByCustomerEmailOrderByCreatedAtDesc(String email);
     Optional<Ticket> findByTicketNumberAndCustomerEmail(String ticketNumber, String email);
 
+    // ── Search ────────────────────────────────────────────────────────────────
     @Query("""
         SELECT t FROM Ticket t
         WHERE (:status IS NULL OR t.status = :status)
@@ -43,6 +50,7 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
         Pageable pageable
     );
 
+    // ── Analytics ─────────────────────────────────────────────────────────────
     long countByStatus(Ticket.TicketStatus status);
     long countBySlaBreachedTrue();
 
