@@ -2,4 +2,4 @@
 cmds = ["mvn clean package -DskipTests"]
 
 [start]
-cmd = "java -Dserver.port=$PORT --spring.profiles.active=production -jar target/ai-support-system-1.0.0.jar"
+cmd = "java -jar target/ai-support-system-1.0.0.jar --spring.profiles.active=production --server.port=$PORT"
