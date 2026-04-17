@@ -33,14 +33,20 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     Optional<Ticket> findByTicketNumberAndCustomerEmail(String ticketNumber, String email);
 
     // ── Search ────────────────────────────────────────────────────────────────
+    // NOTE: LOWER() must NOT be called on ticketNumber because Hibernate/PostgreSQL
+    // resolves the column as bytea in some driver versions, causing:
+    //   "function lower(bytea) does not exist"
+    // Ticket numbers are always uppercase (TKT-XXXX), so we use UPPER(:search)
+    // for that comparison. title and customerName are plain text — LOWER() is fine.
     @Query("""
         SELECT t FROM Ticket t
         WHERE (:status IS NULL OR t.status = :status)
           AND (:priority IS NULL OR t.priority = :priority)
           AND (:category IS NULL OR t.category = :category)
-          AND (:search IS NULL OR LOWER(t.title) LIKE LOWER(CONCAT('%',:search,'%'))
+          AND (:search IS NULL
+               OR LOWER(t.title) LIKE LOWER(CONCAT('%',:search,'%'))
                OR LOWER(t.customerName) LIKE LOWER(CONCAT('%',:search,'%'))
-               OR LOWER(t.ticketNumber) LIKE LOWER(CONCAT('%',:search,'%')))
+               OR t.ticketNumber LIKE UPPER(CONCAT('%',:search,'%')))
     """)
     Page<Ticket> search(
         @Param("status")   Ticket.TicketStatus status,
