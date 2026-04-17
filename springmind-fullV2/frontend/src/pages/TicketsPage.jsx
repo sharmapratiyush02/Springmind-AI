@@ -2,49 +2,49 @@ import { useEffect, useState, useCallback } from 'react'
 import { ticketService } from '../services/ticketService'
 
 const STATUS_META = {
-  OPEN:        { label: '● Open',        cls: 'status-open' },
+  OPEN: { label: '● Open', cls: 'status-open' },
   IN_PROGRESS: { label: '◐ In Progress', cls: 'status-in_progress' },
-  RESOLVED:    { label: '✓ Resolved',    cls: 'status-resolved' },
-  CLOSED:      { label: '— Closed',      cls: 'status-closed' },
+  RESOLVED: { label: '✓ Resolved', cls: 'status-resolved' },
+  CLOSED: { label: '— Closed', cls: 'status-closed' },
 }
-const PRI_DOT = { CRITICAL:'p-critical', HIGH:'p-high', MEDIUM:'p-medium', LOW:'p-low' }
+const PRI_DOT = { CRITICAL: 'p-critical', HIGH: 'p-high', MEDIUM: 'p-medium', LOW: 'p-low' }
 
 const TABS = [
-  { key:'',          label:'All' },
-  { key:'OPEN',      label:'Open' },
-  { key:'IN_PROGRESS',label:'In Progress' },
-  { key:'RESOLVED',  label:'Resolved' },
+  { key: '', label: 'All' },
+  { key: 'OPEN', label: 'Open' },
+  { key: 'IN_PROGRESS', label: 'In Progress' },
+  { key: 'RESOLVED', label: 'Resolved' },
 ]
 
 export default function TicketsPage() {
-  const [tickets, setTickets]   = useState([])
-  const [total,   setTotal]     = useState(0)
-  const [loading, setLoading]   = useState(true)
-  const [tab,     setTab]       = useState('')
-  const [search,  setSearch]    = useState('')
-  const [selected,setSelected]  = useState(null)
-  const [detail,  setDetail]    = useState(null)
+  const [tickets, setTickets] = useState([])
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [tab, setTab] = useState('')
+  const [search, setSearch] = useState('')
+  const [selected, setSelected] = useState(null)
+  const [detail, setDetail] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
-  const [comment,   setComment]     = useState('')
+  const [comment, setComment] = useState('')
   const [submittingComment, setSubmittingComment] = useState(false)
 
   const [form, setForm] = useState({
-    title:'', description:'', customerName:'', customerEmail:'',
-    customerTier:'FREE', category:'', priority:'', channel:'WEB_FORM'
+    title: '', description: '', customerName: '', customerEmail: '',
+    customerTier: 'FREE', category: '', priority: '', channel: 'WEB_FORM'
   })
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
 
-  const load = useCallback((statusFilter=tab, q=search) => {
+  const load = useCallback(() => {
     setLoading(true)
-    ticketService.list({ status: statusFilter || undefined, search: q || undefined, size: 30 })
+    ticketService.list({ status: tab || undefined, search: search || undefined, size: 30 })
       .then(r => { setTickets(r.data.content || []); setTotal(r.data.totalElements || 0) })
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [tab, search])
 
-  useEffect(() => { load(tab, search) }, [tab])
+  useEffect(() => { load() }, [load])
 
   const openDetail = (id) => {
     setSelected(id); setDetail(null); setDetailLoading(true)
@@ -57,7 +57,7 @@ export default function TicketsPage() {
   const updateStatus = (newStatus) => {
     if (!detail) return
     ticketService.update(detail.id, { status: newStatus })
-      .then(r => { setDetail(d => ({ ...d, status: r.data.status })); load() })
+      .then(r => { setDetail(d => ({ ...d, status: r.data.status })); load(); })
       .catch(console.error)
   }
 
@@ -79,12 +79,12 @@ export default function TicketsPage() {
     }
     setCreating(true); setCreateError('')
     ticketService.create(form)
-      .then(() => { setShowCreate(false); setForm({ title:'', description:'', customerName:'', customerEmail:'', customerTier:'FREE', category:'', priority:'', channel:'WEB_FORM' }); load() })
+      .then(() => { setShowCreate(false); setForm({ title: '', description: '', customerName: '', customerEmail: '', customerTier: 'FREE', category: '', priority: '', channel: 'WEB_FORM' }); load() })
       .catch(err => setCreateError(err.response?.data?.message || 'Error creating ticket'))
       .finally(() => setCreating(false))
   }
 
-  const sentColor = { NEGATIVE:'var(--red)', POSITIVE:'var(--green)', NEUTRAL:'var(--muted)' }
+  const sentColor = { NEGATIVE: 'var(--red)', POSITIVE: 'var(--green)', NEUTRAL: 'var(--muted)' }
 
   return (
     <div style={{ padding: 24 }} className="page-fade">
@@ -98,7 +98,7 @@ export default function TicketsPage() {
           <input style={{ background: 'none', border: 'none', outline: 'none', color: 'var(--text)', width: 200, fontSize: 13 }}
             placeholder="Search tickets…" value={search}
             onChange={e => setSearch(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && load(tab, search)} />
+            onKeyDown={e => e.key === 'Enter' && load()} />
         </div>
         <button className="btn primary" onClick={() => setShowCreate(true)}>+ New Ticket</button>
       </div>
@@ -128,18 +128,18 @@ export default function TicketsPage() {
               : tickets.map((t, i) => (
                 <div key={t.id} onClick={() => openDetail(t.id)} style={{
                   display: 'grid', gridTemplateColumns: '90px 1fr 130px 100px 120px 100px',
-                  padding: '13px 20px', borderBottom: i < tickets.length-1 ? '1px solid var(--border)' : 'none',
+                  padding: '13px 20px', borderBottom: i < tickets.length - 1 ? '1px solid var(--border)' : 'none',
                   cursor: 'pointer', alignItems: 'center', transition: 'background 0.1s',
                   background: selected === t.id ? 'var(--surface2)' : 'transparent'
                 }}
-                onMouseEnter={e => { if(selected!==t.id) e.currentTarget.style.background='var(--surface2)' }}
-                onMouseLeave={e => { if(selected!==t.id) e.currentTarget.style.background='transparent' }}>
+                  onMouseEnter={e => { if (selected !== t.id) e.currentTarget.style.background = 'var(--surface2)' }}
+                  onMouseLeave={e => { if (selected !== t.id) e.currentTarget.style.background = 'transparent' }}>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--muted)' }}>{t.ticketNumber}</div>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 500 }}>{t.title}</div>
                     <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 260 }}>{t.description}</div>
                   </div>
-                  <div><span className={`pill pill-${t.category?.toLowerCase()}`}>{t.category?.replace('_',' ') || '—'}</span></div>
+                  <div><span className={`pill pill-${t.category?.toLowerCase()}`}>{t.category?.replace('_', ' ') || '—'}</span></div>
                   <div style={{ fontSize: 12 }}><span className={`priority-dot ${PRI_DOT[t.priority]}`} />{t.priority}</div>
                   <div><span className={`status-pill ${STATUS_META[t.status]?.cls}`}>{STATUS_META[t.status]?.label || t.status}</span></div>
                   <div style={{ fontSize: 12, color: 'var(--muted)' }}>{t.assignedAgent?.name || '—'}</div>
@@ -163,13 +163,13 @@ export default function TicketsPage() {
                   <div style={{ fontFamily: 'var(--font-head)', fontSize: 17, fontWeight: 700, marginBottom: 10 }}>{detail.title}</div>
 
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-                    <span className={`pill pill-${detail.category?.toLowerCase()}`}>{detail.category?.replace('_',' ')}</span>
+                    <span className={`pill pill-${detail.category?.toLowerCase()}`}>{detail.category?.replace('_', ' ')}</span>
                     <span className={`status-pill ${STATUS_META[detail.status]?.cls}`}>{STATUS_META[detail.status]?.label}</span>
                     <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)' }}><span className={`priority-dot ${PRI_DOT[detail.priority]}`} />{detail.priority}</span>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 12, marginBottom: 14 }}>
-                    {[['Customer', detail.customerName], ['Email', detail.customerEmail], ['Tier', detail.customerTier], ['Agent', detail.assignedAgent?.name || 'Unassigned']].map(([k,v]) => (
+                    {[['Customer', detail.customerName], ['Email', detail.customerEmail], ['Tier', detail.customerTier], ['Agent', detail.assignedAgent?.name || 'Unassigned']].map(([k, v]) => (
                       <div key={k}><span style={{ color: 'var(--muted)' }}>{k}: </span>{v}</div>
                     ))}
                   </div>
@@ -181,10 +181,10 @@ export default function TicketsPage() {
                     <div style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--accent2)', marginBottom: 10 }}>🤖 AI Insights</div>
                     {[
                       ['Sentiment', <span style={{ color: sentColor[detail.sentiment] || 'var(--muted)' }}>{detail.sentiment || '—'}</span>],
-                      ['Confidence', `${Math.round((detail.aiConfidence||0)*100)}%`],
+                      ['Confidence', `${Math.round((detail.aiConfidence || 0) * 100)}%`],
                       ['Est. Resolution', `${detail.predictedResolutionHours || '?'}h`],
                       ['SLA Deadline', detail.slaDeadline ? new Date(detail.slaDeadline).toLocaleString() : '—'],
-                    ].map(([k,v]) => (
+                    ].map(([k, v]) => (
                       <div key={k} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 12 }}>
                         <span style={{ color: 'var(--muted)' }}>{k}</span>
                         <span style={{ fontWeight: 500 }}>{v}</span>
@@ -263,14 +263,14 @@ export default function TicketsPage() {
               <div>
                 <label className="form-label">Customer Tier</label>
                 <select className="form-select" value={form.customerTier} onChange={e => setForm(f => ({ ...f, customerTier: e.target.value }))}>
-                  {['FREE','BASIC','PREMIUM','ENTERPRISE'].map(v => <option key={v}>{v}</option>)}
+                  {['FREE', 'BASIC', 'PREMIUM', 'ENTERPRISE'].map(v => <option key={v}>{v}</option>)}
                 </select>
               </div>
               <div>
                 <label className="form-label">Priority (AI will auto-detect)</label>
                 <select className="form-select" value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))}>
                   <option value="">Auto (AI)</option>
-                  {['LOW','MEDIUM','HIGH','CRITICAL'].map(v => <option key={v}>{v}</option>)}
+                  {['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map(v => <option key={v}>{v}</option>)}
                 </select>
               </div>
             </div>
