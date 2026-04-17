@@ -28,12 +28,11 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([ticketService.stats(), ticketService.list({ size: 6 })])
+    Promise.allSettled([ticketService.stats(), ticketService.list({ size: 6 })])
       .then(([sRes, tRes]) => {
-        setStats(sRes.data)
-        setTickets(tRes.data.content || [])
+        if (sRes.status === 'fulfilled') setStats(sRes.value.data)
+        if (tRes.status === 'fulfilled') setTickets(tRes.value.data.content || [])
       })
-      .catch(console.error)
       .finally(() => setLoading(false))
   }, [])
 
