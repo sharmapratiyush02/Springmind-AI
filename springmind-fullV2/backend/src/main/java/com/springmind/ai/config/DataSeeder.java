@@ -25,44 +25,59 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (userRepo.count() > 0) { log.info("Data already seeded, skipping."); return; }
-        log.info("Seeding demo data...");
+        // ── Users ─────────────────────────────────────────────────────────────
+        // Check per-entity so a partially-failed previous deploy doesn't leave
+        // us without tickets (old guard: "if users exist → skip everything").
+        User admin, priya, amit;
+        if (userRepo.count() == 0) {
+            log.info("Seeding users and KB articles...");
+            admin = userRepo.save(User.builder()
+                .fullName("Admin User").email("admin@springmind.ai")
+                .passwordHash(encoder.encode("Admin@123"))
+                .department("Management").roles(Set.of("ADMIN","MANAGER","AGENT")).build());
 
-        // ── Users ────────────────────────────────────────────────────────────
-        User admin = userRepo.save(User.builder()
-            .fullName("Admin User").email("admin@springmind.ai")
-            .passwordHash(encoder.encode("Admin@123"))
-            .department("Management").roles(Set.of("ADMIN","MANAGER","AGENT")).build());
+            priya = userRepo.save(User.builder()
+                .fullName("Priya Mehta").email("priya@springmind.ai")
+                .passwordHash(encoder.encode("Agent@123"))
+                .department("Billing").roles(Set.of("AGENT")).build());
 
-        User priya = userRepo.save(User.builder()
-            .fullName("Priya Mehta").email("priya@springmind.ai")
-            .passwordHash(encoder.encode("Agent@123"))
-            .department("Billing").roles(Set.of("AGENT")).build());
+            amit = userRepo.save(User.builder()
+                .fullName("Amit Sharma").email("amit@springmind.ai")
+                .passwordHash(encoder.encode("Agent@123"))
+                .department("Technical").roles(Set.of("AGENT")).build());
 
-        User amit = userRepo.save(User.builder()
-            .fullName("Amit Sharma").email("amit@springmind.ai")
-            .passwordHash(encoder.encode("Agent@123"))
-            .department("Technical").roles(Set.of("AGENT")).build());
+            // ── KB Articles ──────────────────────────────────────────────────
+            kbRepo.save(kb("Billing dispute resolution process",
+                Ticket.TicketCategory.BILLING, "billing,refund,charge,invoice,dispute"));
+            kbRepo.save(kb("How to process refunds for premium customers",
+                Ticket.TicketCategory.REFUND, "refund,premium,cancel,money,credit"));
+            kbRepo.save(kb("Duplicate charge investigation guide",
+                Ticket.TicketCategory.BILLING, "duplicate,charge,billing,overcharged"));
+            kbRepo.save(kb("Two-factor authentication troubleshooting",
+                Ticket.TicketCategory.ACCOUNT, "2fa,login,authentication,sms,code"));
+            kbRepo.save(kb("API rate limiting and quota management",
+                Ticket.TicketCategory.TECHNICAL, "api,rate limit,429,quota,webhook"));
+            kbRepo.save(kb("Account suspension review procedure",
+                Ticket.TicketCategory.ACCOUNT, "account,suspended,locked,access,freeze"));
+            kbRepo.save(kb("Password reset and account recovery",
+                Ticket.TicketCategory.ACCOUNT, "password,reset,recovery,email,otp"));
+            kbRepo.save(kb("Integration setup guide — Zapier and Webhooks",
+                Ticket.TicketCategory.TECHNICAL, "integration,zapier,webhook,connect,setup"));
+        } else {
+            log.info("Users already exist, skipping user/KB seeding.");
+            admin = userRepo.findByEmail("admin@springmind.ai").orElse(null);
+            priya = userRepo.findByEmail("priya@springmind.ai").orElse(null);
+            amit  = userRepo.findByEmail("amit@springmind.ai").orElse(null);
+        }
 
-        // ── KB Articles ──────────────────────────────────────────────────────
-        kbRepo.save(kb("Billing dispute resolution process",
-            Ticket.TicketCategory.BILLING, "billing,refund,charge,invoice,dispute"));
-        kbRepo.save(kb("How to process refunds for premium customers",
-            Ticket.TicketCategory.REFUND, "refund,premium,cancel,money,credit"));
-        kbRepo.save(kb("Duplicate charge investigation guide",
-            Ticket.TicketCategory.BILLING, "duplicate,charge,billing,overcharged"));
-        kbRepo.save(kb("Two-factor authentication troubleshooting",
-            Ticket.TicketCategory.ACCOUNT, "2fa,login,authentication,sms,code"));
-        kbRepo.save(kb("API rate limiting and quota management",
-            Ticket.TicketCategory.TECHNICAL, "api,rate limit,429,quota,webhook"));
-        kbRepo.save(kb("Account suspension review procedure",
-            Ticket.TicketCategory.ACCOUNT, "account,suspended,locked,access,freeze"));
-        kbRepo.save(kb("Password reset and account recovery",
-            Ticket.TicketCategory.ACCOUNT, "password,reset,recovery,email,otp"));
-        kbRepo.save(kb("Integration setup guide — Zapier and Webhooks",
-            Ticket.TicketCategory.TECHNICAL, "integration,zapier,webhook,connect,setup"));
+        // ── Sample Tickets ────────────────────────────────────────────────────
+        // Always check tickets independently — they may be missing even if users exist.
+        if (ticketRepo.count() > 0) {
+            log.info("Tickets already exist, skipping ticket seeding.");
+            return;
+        }
 
-        // ── Sample Tickets ───────────────────────────────────────────────────
+        log.info("Seeding sample tickets...");
         saveTicket("Duplicate charge on invoice",
             "I was charged twice for my Pro plan subscription in April. Please investigate and refund.",
             "Rajesh Kumar", "rajesh@example.com", "PREMIUM",
@@ -103,7 +118,7 @@ public class DataSeeder implements CommandLineRunner {
             "Marcus Lee", "marcus@example.com", "BASIC",
             "ACCOUNT", "HIGH", null);
 
-        log.info("Demo data seeded. Login: admin@springmind.ai / Admin@123");
+        log.info("Demo data seeded successfully. Login: admin@springmind.ai / Admin@123");
     }
 
     private KnowledgeBaseArticle kb(String title, Ticket.TicketCategory cat, String tags) {
