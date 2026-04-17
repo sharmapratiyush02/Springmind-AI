@@ -187,10 +187,15 @@ public class TicketService {
         m.put("slaDeadline",  t.getSlaDeadline());
         m.put("slaBreached",  t.isSlaBreached());
         m.put("predictedResolutionHours", t.getPredictedResolutionHours());
-        m.put("assignedAgent", t.getAssignedAgent() != null ? Map.of(
-            "id",   t.getAssignedAgent().getId(),
-            "name", t.getAssignedAgent().getFullName()
-        ) : null);
+        if (t.getAssignedAgent() != null) {
+            Map<String, Object> agentMap = new LinkedHashMap<>();
+            agentMap.put("id",   t.getAssignedAgent().getId());
+            agentMap.put("name", t.getAssignedAgent().getFullName() != null 
+                         ? t.getAssignedAgent().getFullName() : "Agent");
+            m.put("assignedAgent", agentMap);
+        } else {
+            m.put("assignedAgent", null);
+        }
         m.put("createdAt",  t.getCreatedAt());
         m.put("updatedAt",  t.getUpdatedAt());
         m.put("resolvedAt", t.getResolvedAt());
