@@ -14,62 +14,61 @@
   --fh:'Syne',sans-serif;--fb:'Instrument Sans',sans-serif;--fm:'JetBrains Mono',monospace;
 }
 body{background:var(--bg);color:var(--text);font-family:var(--fb);min-height:100vh;display:flex;flex-direction:column;}
-/* Header */
 header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;justify-content:space-between;}
 .logo{display:flex;align-items:center;gap:10px;}
 .logo-icon{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--accent2),var(--accent));display:flex;align-items:center;justify-content:center;font-size:18px;}
 .logo-text{font-family:var(--fh);font-weight:700;font-size:17px;}
 .logo-sub{font-size:11px;color:var(--muted);font-family:var(--fm);}
 .header-links{display:flex;gap:8px;}
-.hbtn{padding:7px 14px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-family:var(--fb);font-size:13px;cursor:pointer;text-decoration:none;transition:all .15s;}
+.hbtn{padding:7px 14px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-family:var(--fb);font-size:13px;cursor:pointer;text-decoration:none;transition:all .15s;display:inline-flex;align-items:center;}
 .hbtn:hover{color:var(--text);background:var(--surface2);}
 .hbtn.primary{background:var(--accent);border-color:transparent;color:#fff;}
 .hbtn.primary:hover{background:#3a7ae8;}
-/* Hero */
-.hero{text-align:center;padding:64px 24px 40px;}
+.hero{text-align:center;padding:56px 24px 40px;}
 .hero-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(79,142,247,.1);color:var(--accent);border:1px solid rgba(79,142,247,.25);border-radius:20px;padding:5px 14px;font-size:12px;font-family:var(--fm);margin-bottom:24px;}
 .hero h1{font-family:var(--fh);font-size:42px;font-weight:800;letter-spacing:-1.5px;margin-bottom:14px;background:linear-gradient(135deg,var(--text),var(--muted));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 .hero p{font-size:15px;color:var(--muted);max-width:480px;margin:0 auto 36px;line-height:1.7;}
-/* Lookup Card */
-.card{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:36px;max-width:480px;margin:0 auto;width:100%;}
-.form-group{margin-bottom:18px;}
+.card{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:36px;max-width:500px;margin:0 auto;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4);}
+.form-group{margin-bottom:16px;}
 label{display:block;font-size:11px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
 input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:var(--fb);font-size:14px;outline:none;transition:border .2s;}
 input:focus{border-color:var(--accent);}
 input::placeholder{color:var(--muted);}
-.submit-btn{width:100%;padding:13px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;font-family:var(--fh);font-size:15px;font-weight:700;cursor:pointer;transition:opacity .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;}
-.submit-btn:hover{opacity:.9;}
-.submit-btn:disabled{opacity:.5;cursor:not-allowed;}
+.submit-btn{width:100%;padding:13px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;font-family:var(--fh);font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;}
+.submit-btn:disabled{opacity:.45;cursor:not-allowed;background:var(--surface2);}
 .hint{text-align:center;font-size:12px;color:var(--muted);font-family:var(--fm);margin-top:14px;}
 .hint a{color:var(--accent);text-decoration:none;}
-/* Result */
+.captcha-box{background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:16px;transition:border-color .2s;}
+.captcha-box.verified{border-color:var(--green);}
+.captcha-box.wrong{border-color:var(--red);}
+.captcha-chk{width:22px;height:22px;border-radius:5px;background:var(--surface);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:all .2s;}
+.captcha-chk.verified{background:var(--green);border-color:var(--green);color:#fff;}
+.captcha-chk.wrong{background:var(--red);border-color:var(--red);color:#fff;}
+.captcha-expr{font-family:var(--fh);font-size:18px;font-weight:800;background:linear-gradient(135deg,var(--accent2),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap;}
+.captcha-num{width:64px;background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-family:var(--fm);font-size:14px;outline:none;text-align:center;}
 .result{margin-top:28px;display:none;}
 .result.show{display:block;animation:fadeIn .3s ease;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.ticket-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
-.ticket-num{font-family:var(--fm);font-size:13px;color:var(--muted);}
-.ticket-title{font-family:var(--fh);font-size:20px;font-weight:700;margin-top:4px;}
-/* Status timeline */
-.timeline{margin:22px 0;position:relative;}
-.timeline::before{content:'';position:absolute;left:15px;top:0;bottom:0;width:2px;background:var(--border);}
-.tl-step{display:flex;align-items:flex-start;gap:14px;margin-bottom:18px;position:relative;}
-.tl-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;z-index:1;border:2px solid var(--border);}
-.tl-dot.done{background:var(--green);border-color:var(--green);}
-.tl-dot.active{background:var(--accent);border-color:var(--accent);animation:pulse 1.5s infinite;}
-.tl-dot.pending{background:var(--surface2);border-color:var(--border2);}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(79,142,247,.4)}50%{box-shadow:0 0 0 8px rgba(79,142,247,0)}}
-.tl-label{font-size:13px;font-weight:500;margin-top:5px;}
-.tl-sub{font-size:11px;color:var(--muted);margin-top:2px;}
-/* Info grid */
+.status-track{display:flex;align-items:flex-start;position:relative;padding:0 8px;}
+.status-track::before{content:'';position:absolute;top:17px;left:30px;right:30px;height:2px;background:var(--border2);z-index:0;}
+.st-step{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;z-index:1;}
+.st-dot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid var(--border2);background:var(--surface);transition:all .3s;}
+.st-dot.done{background:var(--green);border-color:var(--green);color:#fff;}
+.st-dot.active{background:var(--accent);border-color:var(--accent);color:#fff;animation:activePulse 2s infinite;}
+.st-dot.pending{background:var(--surface2);color:var(--muted);}
+@keyframes activePulse{0%,100%{box-shadow:0 0 0 0 rgba(79,142,247,.3)}50%{box-shadow:0 0 0 8px rgba(79,142,247,0)}}
+.st-label{font-size:11px;font-weight:600;text-align:center;}
+.st-label.done,.st-label.active{color:var(--text);}
+.st-label.pending{color:var(--muted);}
+.st-sub{font-size:10px;color:var(--muted);font-family:var(--fm);text-align:center;max-width:72px;}
+.st-step.done::after{content:'';position:absolute;top:17px;left:50%;right:-50%;height:2px;background:var(--green);z-index:-1;}
 .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;}
 .info-item{background:var(--surface2);border-radius:10px;padding:12px 14px;}
 .info-label{font-size:10px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;}
 .info-value{font-size:13px;font-weight:500;}
-/* Progress bar */
 .progress-wrap{margin:16px 0;}
 .progress-track{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-top:6px;}
 .progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .8s ease;}
-/* Pills */
 .pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-family:var(--fm);font-weight:500;}
 .pill-open{background:rgba(79,142,247,.15);color:var(--accent);}
 .pill-in_progress{background:rgba(245,166,35,.15);color:var(--amber);}
@@ -78,14 +77,12 @@ input::placeholder{color:var(--muted);}
 .pill-high{background:rgba(245,166,35,.15);color:var(--amber);}
 .pill-medium{background:rgba(79,142,247,.15);color:var(--accent);}
 .pill-low{background:rgba(45,212,160,.15);color:var(--green);}
-/* Error */
 .error-box{background:rgba(242,92,92,.1);border:1px solid rgba(242,92,92,.3);border-radius:10px;padding:12px 16px;color:var(--red);font-size:13px;margin-top:14px;display:none;}
 .error-box.show{display:block;}
-/* Spinner */
 .spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
-/* Footer */
 footer{margin-top:auto;padding:24px;text-align:center;font-size:12px;color:var(--muted);border-top:1px solid var(--border);}
+@keyframes aiPulse{0%,100%{opacity:1}50%{opacity:.3}}
 </style>
 </head>
 <body>
@@ -99,7 +96,7 @@ footer{margin-top:auto;padding:24px;text-align:center;font-size:12px;color:var(-
     </div>
   </div>
   <div class="header-links">
-    <a href="customer-portal.html" class="hbtn">My Account</a>
+    <a href="customer-portal.html" class="hbtn">👤 My Account</a>
     <a href="customer-portal.html#register" class="hbtn primary">Create Account →</a>
   </div>
 </header>
@@ -107,7 +104,12 @@ footer{margin-top:auto;padding:24px;text-align:center;font-size:12px;color:var(-
 <div class="hero">
   <div class="hero-badge">🔍 No login required</div>
   <h1>Track Your Support Ticket</h1>
-  <p>Enter your email and ticket number to instantly see the status and progress of your support request.</p>
+  <p>Enter your email and ticket number to instantly see the live status, assignment, and progress of your support request.</p>
+
+  <div style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-family:var(--fm);color:var(--muted);margin-bottom:24px;">
+    <div id="apiDot" style="width:7px;height:7px;border-radius:50%;background:var(--amber)"></div>
+    <span id="apiLabel">Connecting…</span>
+  </div>
 
   <div class="card">
     <div class="form-group">
@@ -118,149 +120,175 @@ footer{margin-top:auto;padding:24px;text-align:center;font-size:12px;color:var(-
       <label>Ticket Number</label>
       <input type="text" id="ticketInp" placeholder="e.g. TKT-1001" style="font-family:var(--fm);text-transform:uppercase;">
     </div>
-    <button class="submit-btn" id="lookupBtn" onclick="doLookup()">
+
+    <label>Security Check — I'm not a robot</label>
+    <div class="captcha-box" id="captchaBox">
+      <div class="captcha-chk" id="captchaChk">?</div>
+      <div style="flex:1">
+        <div style="font-size:11px;color:var(--muted);font-family:var(--fm);margin-bottom:6px;text-transform:uppercase;letter-spacing:.8px">Solve to continue:</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="captcha-expr" id="captchaExpr">…</span>
+          <input class="captcha-num" type="number" id="captchaInp" placeholder="?" oninput="checkCaptcha(this.value)">
+        </div>
+        <div id="captchaMsg" style="font-size:11px;font-family:var(--fm);color:var(--muted);margin-top:4px">Enter the answer above</div>
+      </div>
+      <button onclick="newCaptcha()" title="Refresh" style="background:none;border:1px solid var(--border2);border-radius:6px;width:28px;height:28px;cursor:pointer;color:var(--muted);font-size:15px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">↻</button>
+    </div>
+
+    <button class="submit-btn" id="lookupBtn" onclick="doLookup()" disabled>
       🔍 Track My Ticket
     </button>
     <div class="error-box" id="errorBox"></div>
     <p class="hint">Don't have a ticket? <a href="customer-portal.html">Create an account</a> to submit one.</p>
-
     <div class="result" id="result"></div>
   </div>
 </div>
 
 <footer>
-  © 2024 SpringMind AI Support Platform · <a href="customer-portal.html" style="color:var(--accent)">Customer Portal</a>
+  © 2026 SpringMind AI Support Platform ·
+  <a href="customer-portal.html" style="color:var(--accent)">Customer Portal</a> ·
+  <a href="/" style="color:var(--muted)">Agent Dashboard</a>
 </footer>
 
 <script>
-const API = 'https://springmind-backend.onrender.com/api';
+// Auto-detect local vs production (checks hostname AND port)
+const IS_LOCAL = !location.hostname || location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+  || ['3000','5173','5500','5501'].includes(location.port);
+// Use direct URL — same approach as React admin app (VITE_API_URL=http://localhost:8080/api)
+const API = IS_LOCAL ? 'http://localhost:8080/api' : 'https://springmind-backend.onrender.com/api';
+document.getElementById('apiDot').style.background = IS_LOCAL ? 'var(--green)' : 'var(--amber)';
+document.getElementById('apiLabel').textContent = IS_LOCAL ? '✓ Local server (localhost:8080)' : '⚡ Production API · may take 30s to wake';
+
+// Fetch with 12-second timeout — prevents infinite "Looking up..." spinner
+async function fetchWithTimeout(url, opts = {}, ms = 12000) {
+  const ctrl = new AbortController();
+  const id = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const r = await fetch(url, { ...opts, signal: ctrl.signal });
+    clearTimeout(id); return r;
+  } catch(e) {
+    clearTimeout(id);
+    if (e.name === 'AbortError') throw new Error('Request timed out — is the backend running on port 8080?');
+    throw e;
+  }
+}
+
+let captchaAns = '', captchaOk = false;
+function newCaptcha() {
+  const ops=['+','-','×']; const op=ops[Math.floor(Math.random()*3)];
+  let a,b,ans;
+  if(op==='+'){a=Math.floor(Math.random()*20)+1;b=Math.floor(Math.random()*20)+1;ans=a+b;}
+  else if(op==='-'){a=Math.floor(Math.random()*20)+10;b=Math.floor(Math.random()*a)+1;ans=a-b;}
+  else{a=Math.floor(Math.random()*9)+2;b=Math.floor(Math.random()*9)+2;ans=a*b;}
+  captchaAns=String(ans); captchaOk=false;
+  document.getElementById('captchaExpr').textContent=`${a} ${op} ${b} = ?`;
+  document.getElementById('captchaInp').value='';
+  document.getElementById('captchaBox').className='captcha-box';
+  document.getElementById('captchaChk').className='captcha-chk'; document.getElementById('captchaChk').textContent='?';
+  document.getElementById('captchaMsg').style.color='var(--muted)'; document.getElementById('captchaMsg').textContent='Enter the answer above';
+  document.getElementById('lookupBtn').disabled=true;
+}
+function checkCaptcha(v) {
+  if(!v) return;
+  if(v===captchaAns){
+    captchaOk=true;
+    document.getElementById('captchaBox').className='captcha-box verified';
+    document.getElementById('captchaChk').className='captcha-chk verified'; document.getElementById('captchaChk').textContent='✓';
+    document.getElementById('captchaMsg').style.color='var(--green)'; document.getElementById('captchaMsg').textContent='✓ Verified!';
+    document.getElementById('lookupBtn').disabled=false;
+  } else if(v.length>=captchaAns.length){
+    captchaOk=false;
+    document.getElementById('captchaBox').className='captcha-box wrong';
+    document.getElementById('captchaChk').className='captcha-chk wrong'; document.getElementById('captchaChk').textContent='✕';
+    document.getElementById('captchaMsg').style.color='var(--red)'; document.getElementById('captchaMsg').textContent='Wrong — refreshing…';
+    document.getElementById('lookupBtn').disabled=true; setTimeout(newCaptcha,1100);
+  }
+}
+newCaptcha();
 
 async function doLookup() {
-  const email  = document.getElementById('emailInp').value.trim();
-  const ticket = document.getElementById('ticketInp').value.trim().toUpperCase();
-  const errBox = document.getElementById('errorBox');
-  const result = document.getElementById('result');
-  const btn    = document.getElementById('lookupBtn');
-
-  errBox.classList.remove('show');
-  result.classList.remove('show');
-
-  if (!email || !ticket) {
-    errBox.textContent = 'Please enter both your email and ticket number.';
-    errBox.classList.add('show'); return;
-  }
-
-  btn.disabled = true;
-  btn.innerHTML = '<div class="spin"></div> Looking up…';
-
+  if(!captchaOk) return;
+  const email=document.getElementById('emailInp').value.trim();
+  const ticket=document.getElementById('ticketInp').value.trim().toUpperCase();
+  const errBox=document.getElementById('errorBox'); const result=document.getElementById('result'); const btn=document.getElementById('lookupBtn');
+  errBox.classList.remove('show'); result.classList.remove('show');
+  if(!email||!ticket){errBox.textContent='Please enter both your email and ticket number.';errBox.classList.add('show');return;}
+  btn.disabled=true; btn.innerHTML='<div class="spin"></div> Looking up…';
   try {
-    const res  = await fetch(`${API}/customer/lookup`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ticketNumber: ticket, email })
+    const res=await fetchWithTimeout(`${API}/customer/lookup`,{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticketNumber:ticket,email})
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Ticket not found');
-    renderResult(data);
-  } catch (e) {
-    errBox.textContent = e.message;
-    errBox.classList.add('show');
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '🔍 Track My Ticket';
-  }
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.message||'Ticket not found. Check your email and ticket number.');
+    renderResult(data); newCaptcha();
+  } catch(e){errBox.textContent=e.message;errBox.classList.add('show');}
+  finally{btn.disabled=!captchaOk;btn.innerHTML='🔍 Track My Ticket';}
 }
 
 function renderResult(t) {
-  const statusClass = (t.status || '').toLowerCase().replace('_','-');
-  const priClass    = (t.priority || '').toLowerCase();
-
-  const steps = [
-    { label: 'Ticket Received',  sub: 'Your request was submitted', done: true },
-    { label: 'Under Review',     sub: 'Support team reviewing your issue', done: ['IN_PROGRESS','RESOLVED','CLOSED'].includes(t.status) },
-    { label: 'In Progress',      sub: t.assignedAgent !== 'Being assigned' ? `Assigned to ${t.assignedAgent}` : 'Agent being assigned', done: ['RESOLVED','CLOSED'].includes(t.status), active: t.status === 'IN_PROGRESS' },
-    { label: 'Resolved',         sub: t.resolvedAt ? new Date(t.resolvedAt).toLocaleString() : 'Pending resolution', done: ['RESOLVED','CLOSED'].includes(t.status) },
+  const sc=(t.status||'').toLowerCase().replace('_','-');
+  const pc=(t.priority||'').toLowerCase();
+  const STEPS=[
+    {label:'Received',icon:'📩',sub:t.createdAt?new Date(t.createdAt).toLocaleDateString():''},
+    {label:'Reviewing',icon:'🔍',sub:'Support team'},
+    {label:'In Progress',icon:'⚙️',sub:t.assignedAgent&&t.assignedAgent!=='Being assigned'?t.assignedAgent:'Assigning…'},
+    {label:'Resolved',icon:'✅',sub:t.resolvedAt?new Date(t.resolvedAt).toLocaleDateString():'Pending'},
   ];
+  const stage={OPEN:1,IN_PROGRESS:2,RESOLVED:3,CLOSED:3}[t.status]??0;
+  const tlHTML=STEPS.map((s,i)=>{
+    const done=i<stage,active=i===stage;
+    return `<div class="st-step ${done?'done':''}"><div class="st-dot ${done?'done':active?'active':'pending'}">${done?'✓':s.icon}</div><div class="st-label ${done?'done':active?'active':'pending'}">${s.label}</div><div class="st-sub">${s.sub}</div></div>`;
+  }).join('');
 
-  const tlHTML = steps.map(s => `
-    <div class="tl-step">
-      <div class="tl-dot ${s.done ? 'done' : s.active ? 'active' : 'pending'}">${s.done ? '✓' : s.active ? '●' : '○'}</div>
-      <div>
-        <div class="tl-label" style="color:${s.done || s.active ? 'var(--text)' : 'var(--muted)'}">${s.label}</div>
-        <div class="tl-sub">${s.sub}</div>
-      </div>
-    </div>`).join('');
-
-  const sla = t.slaDeadline ? new Date(t.slaDeadline).toLocaleString() : '—';
-  const created = t.createdAt ? new Date(t.createdAt).toLocaleString() : '—';
-
-  document.getElementById('result').innerHTML = `
+  document.getElementById('result').innerHTML=`
     <hr style="border:none;border-top:1px solid var(--border);margin-bottom:22px">
-    <div class="ticket-header">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
       <div>
-        <div class="ticket-num">${t.ticketNumber}</div>
-        <div class="ticket-title">${t.title}</div>
+        <div style="font-family:var(--fm);font-size:12px;color:var(--muted)">${t.ticketNumber}</div>
+        <div style="font-family:var(--fh);font-size:20px;font-weight:700;margin-top:4px">${t.title}</div>
       </div>
-      <span class="pill pill-${statusClass}">${t.status?.replace('_',' ')}</span>
+      <span class="pill pill-${sc}" style="font-size:12px;padding:5px 12px">${(t.status||'').replace('_',' ')}</span>
     </div>
-
     <div class="progress-wrap">
       <div style="display:flex;justify-content:space-between;font-size:12px">
-        <span style="color:var(--muted)">Progress</span>
-        <span style="font-family:var(--fm);color:var(--accent)">${t.progressPercent}%</span>
+        <span style="color:var(--muted)">${t.statusLabel||'Processing'}</span>
+        <span style="font-family:var(--fm);color:var(--accent)">${t.progressPercent||0}% complete</span>
       </div>
-      <div class="progress-track"><div class="progress-fill" style="width:${t.progressPercent}%"></div></div>
+      <div class="progress-track"><div class="progress-fill" style="width:${t.progressPercent||0}%"></div></div>
     </div>
-
-    <div style="background:rgba(79,142,247,.07);border:1px solid rgba(79,142,247,.15);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);margin-bottom:18px">
-      📋 ${t.statusLabel}
+    <div style="background:var(--surface2);border-radius:14px;padding:20px 16px;margin:20px 0;">
+      <div style="font-size:11px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px;text-align:center;">📍 Ticket Journey</div>
+      <div class="status-track">${tlHTML}</div>
     </div>
-
-    <div class="timeline">${tlHTML}</div>
-
     <div class="info-grid">
-      <div class="info-item">
-        <div class="info-label">Priority</div>
-        <div class="info-value"><span class="pill pill-${priClass}">${t.priority}</span></div>
-      </div>
-      <div class="info-item">
-        <div class="info-label">Category</div>
-        <div class="info-value">${t.category?.replace('_',' ') || '—'}</div>
-      </div>
-      <div class="info-item">
-        <div class="info-label">Assigned Agent</div>
-        <div class="info-value">${t.assignedAgent}</div>
-      </div>
-      <div class="info-item">
-        <div class="info-label">Est. Resolution</div>
-        <div class="info-value">${t.predictedResolutionHours ? t.predictedResolutionHours + 'h' : '—'}</div>
-      </div>
-      <div class="info-item">
-        <div class="info-label">Submitted</div>
-        <div class="info-value" style="font-size:12px">${created}</div>
-      </div>
-      <div class="info-item">
-        <div class="info-label">SLA Deadline</div>
-        <div class="info-value" style="font-size:12px">${sla}</div>
-      </div>
+      <div class="info-item"><div class="info-label">Priority</div><div class="info-value"><span class="pill pill-${pc}">${t.priority}</span></div></div>
+      <div class="info-item"><div class="info-label">Category</div><div class="info-value">${(t.category||'—').replace('_',' ')}</div></div>
+      <div class="info-item"><div class="info-label">Assigned Agent</div><div class="info-value">${t.assignedAgent||'Being assigned'}</div></div>
+      <div class="info-item"><div class="info-label">Est. Resolution</div><div class="info-value">${t.predictedResolutionHours?t.predictedResolutionHours+'h':'—'}</div></div>
+      <div class="info-item"><div class="info-label">Submitted</div><div class="info-value" style="font-size:12px">${t.createdAt?new Date(t.createdAt).toLocaleString():'—'}</div></div>
+      <div class="info-item"><div class="info-label">SLA Deadline</div><div class="info-value" style="font-size:12px;color:${t.slaBreached?'var(--red)':'inherit'}">${t.slaDeadline?new Date(t.slaDeadline).toLocaleString():'—'}${t.slaBreached?' ⚠':''}</div></div>
     </div>
-
-    <div style="margin-top:20px;padding:14px;background:var(--surface2);border-radius:10px;">
+    <div style="margin-top:16px;padding:14px;background:var(--surface2);border-radius:10px;">
       <div style="font-size:11px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Issue Description</div>
       <div style="font-size:13px;color:var(--muted);line-height:1.7">${t.description}</div>
     </div>
-
-    <div style="margin-top:16px;text-align:center">
-      <a href="customer-portal.html" style="color:var(--accent);font-size:13px;text-decoration:none">
-        Create an account to reply and manage all your tickets →
-      </a>
+    <div style="margin-top:14px;background:rgba(124,92,252,.05);border:1px solid rgba(124,92,252,.18);border-radius:12px;padding:14px 16px;">
+      <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(124,92,252,.12);color:#a78df5;border:1px solid rgba(124,92,252,.25);border-radius:20px;padding:3px 11px;font-size:11px;font-family:var(--fm);margin-bottom:10px">
+        <div style="width:5px;height:5px;border-radius:50%;background:#7c5cfc;animation:aiPulse 1.8s infinite"></div>AI Analysis
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+        <div><span style="color:var(--muted)">Sentiment: </span>${t.sentiment||'—'}</div>
+        <div><span style="color:var(--muted)">AI Confidence: </span>${Math.round((t.aiConfidence||0)*100)}%</div>
+      </div>
     </div>
-  `;
+    <div style="margin-top:20px;text-align:center;padding:16px;background:rgba(79,142,247,.06);border:1px solid rgba(79,142,247,.15);border-radius:12px">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:10px">Want to reply or manage all your tickets?</div>
+      <a href="customer-portal.html" style="display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:500;text-decoration:none;">👤 Login to Customer Portal →</a>
+    </div>`;
   document.getElementById('result').classList.add('show');
 }
 
-// Allow Enter key
-document.addEventListener('keydown', e => { if(e.key==='Enter') doLookup(); });
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&captchaOk)doLookup();});
 </script>
 </body>
 </html>

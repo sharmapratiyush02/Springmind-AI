@@ -19,23 +19,37 @@ public class KnowledgeBaseService {
 
     @Transactional(readOnly = true)
     public List<Map<String, Object>> search(String query, String categoryStr, int limit) {
-        List<KnowledgeBaseArticle> results = kbRepo.searchByKeyword(
-            query, PageRequest.of(0, Math.max(limit * 2, 10)));
+        // Split query into meaningful tokens (skip stop-words shorter than 3 chars)
+        String[] tokens = Arrays.stream(query.toLowerCase().split("\\s+"))
+            .filter(t -> t.length() > 2)
+            .toArray(String[]::new);
 
-        String[] tokens = query.toLowerCase().split("\\s+");
+        // Fallback: if all words were too short, use the full query
+        String[] searchTerms = tokens.length > 0 ? tokens : new String[]{query.toLowerCase()};
 
-        return results.stream().map(a -> {
-            long hits = Arrays.stream(tokens)
+        // Search each token individually and collect unique articles
+        Map<Long, KnowledgeBaseArticle> seen = new LinkedHashMap<>();
+        for (String token : searchTerms) {
+            List<KnowledgeBaseArticle> hits = kbRepo.searchByKeyword(
+                token, PageRequest.of(0, Math.max(limit * 2, 10)));
+            for (KnowledgeBaseArticle a : hits) {
+                seen.putIfAbsent(a.getId(), a);
+            }
+        }
+
+        // Score each article by how many tokens matched its title or tags
+        return seen.values().stream().map(a -> {
+            long matchCount = Arrays.stream(searchTerms)
                 .filter(t -> a.getTitle().toLowerCase().contains(t)
                           || (a.getTags() != null && a.getTags().toLowerCase().contains(t)))
                 .count();
-            double score = Math.min(0.99, 0.5 + hits * 0.1);
+            double score = Math.min(0.99, 0.45 + matchCount * 0.15);
 
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id",            a.getId());
             m.put("title",         a.getTitle());
             m.put("category",      a.getCategory() != null ? a.getCategory().name() : "GENERAL");
-            m.put("relevanceScore",Math.round(score * 100.0) / 100.0);
+            m.put("relevanceScore", Math.round(score * 100.0) / 100.0);
             m.put("viewCount",     a.getViewCount());
             m.put("updatedAt",     a.getUpdatedAt());
             return m;

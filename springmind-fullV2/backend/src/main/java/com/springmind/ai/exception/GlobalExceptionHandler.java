@@ -28,7 +28,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Map<String, Object>> badCredentials(BadCredentialsException ex) {
-        return error(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+        String message = ex.getMessage() != null && ex.getMessage().toLowerCase().contains("verification")
+            ? ex.getMessage()
+            : "Invalid email or password";
+        return error(HttpStatus.UNAUTHORIZED, message);
     }
 
     @ExceptionHandler(AccessDeniedException.class)

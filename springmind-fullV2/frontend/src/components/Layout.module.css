@@ -106,12 +106,16 @@
 }
 
 .bottom {
-  margin-top: auto;
-  padding: 16px;
+  padding: 10px 16px 16px;
   border-top: 1px solid var(--border);
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+/* Push utility strip + bottom to bottom of sidebar */
+.nav {
+  flex: 1;
 }
 
 .avatar {

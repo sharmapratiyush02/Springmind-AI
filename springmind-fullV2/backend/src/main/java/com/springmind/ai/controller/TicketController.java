@@ -62,6 +62,12 @@ public class TicketController {
         return ResponseEntity.ok(ticketService.getById(id).get("comments"));
     }
 
+    @PostMapping("/auto-assign")
+    public ResponseEntity<?> autoAssign() {
+        int count = ticketService.autoAssignUnassigned();
+        return ResponseEntity.ok(Map.of("assigned", count));
+    }
+
     @GetMapping("/dashboard/stats")
     public ResponseEntity<?> stats() {
         return ResponseEntity.ok(ticketService.dashboardStats());

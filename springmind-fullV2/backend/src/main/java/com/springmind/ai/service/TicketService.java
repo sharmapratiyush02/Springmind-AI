@@ -88,6 +88,14 @@ public class TicketService {
             .predictedResolutionHours(resHrs)
             .build();
 
+        // Auto-assign the currently logged-in agent to the new ticket
+        try {
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            userRepo.findByEmail(email).ifPresent(ticket::setAssignedAgent);
+        } catch (Exception e) {
+            log.debug("Could not auto-assign agent on create: {}", e.getMessage());
+        }
+
         return ticketRepo.save(ticket);
     }
 
@@ -99,8 +107,10 @@ public class TicketService {
         Ticket.TicketCategory c = parseEnumNullable(category, Ticket.TicketCategory.class);
         String q = (search == null || search.isBlank()) ? null : search;
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<Ticket> tickets = ticketRepo.search(s, p, c, q, pageable);
+        // SLA deadline order is the operational priority: tickets nearest to breach are listed first,
+        // so newer tickets cannot jump ahead of SLA-critical work.
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Ticket> tickets = ticketRepo.searchSlaPriority(s, p, c, q, pageable);
         return tickets.map(this::toMap);
     }
 
@@ -131,6 +141,17 @@ public class TicketService {
             Long agentId = Long.parseLong(fields.get("assignedAgentId").toString());
             userRepo.findById(agentId).ifPresent(t::setAssignedAgent);
         }
+
+        // Auto-assign the currently logged-in agent if ticket is unassigned
+        if (t.getAssignedAgent() == null) {
+            try {
+                String email = SecurityContextHolder.getContext().getAuthentication().getName();
+                userRepo.findByEmail(email).ifPresent(t::setAssignedAgent);
+            } catch (Exception e) {
+                log.debug("Could not auto-assign agent: {}", e.getMessage());
+            }
+        }
+
         return toMap(ticketRepo.save(t));
     }
 
@@ -144,6 +165,28 @@ public class TicketService {
         TicketComment comment = TicketComment.builder()
             .ticket(ticket).author(author).body(body).internalNote(internalNote).build();
         return commentToMap(commentRepo.save(comment));
+    }
+
+    /**
+     * Auto-assign all unassigned tickets to the currently logged-in agent.
+     * Called on page load / refresh to ensure stats are accurate.
+     */
+    public int autoAssignUnassigned() {
+        try {
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            User agent = userRepo.findByEmail(email).orElse(null);
+            if (agent == null) return 0;
+
+            List<Ticket> unassigned = ticketRepo.findByAssignedAgentIsNull();
+            for (Ticket t : unassigned) {
+                t.setAssignedAgent(agent);
+            }
+            ticketRepo.saveAll(unassigned);
+            return unassigned.size();
+        } catch (Exception e) {
+            log.debug("Could not auto-assign unassigned tickets: {}", e.getMessage());
+            return 0;
+        }
     }
 
     @Transactional(readOnly = true)

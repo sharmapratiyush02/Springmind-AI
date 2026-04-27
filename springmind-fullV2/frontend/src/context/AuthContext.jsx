@@ -10,6 +10,15 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (email, password) => {
     const { data } = await authService.login(email, password)
+    if (data.otpRequired) return data
+    localStorage.setItem('sm_token', data.accessToken)
+    localStorage.setItem('sm_user', JSON.stringify(data.user))
+    setUser(data.user)
+    return data.user
+  }, [])
+
+  const verifyOtp = useCallback(async (challengeToken, otp) => {
+    const { data } = await authService.verifyOtp(challengeToken, otp)
     localStorage.setItem('sm_token', data.accessToken)
     localStorage.setItem('sm_user', JSON.stringify(data.user))
     setUser(data.user)
@@ -23,7 +32,7 @@ export function AuthProvider({ children }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoggedIn: !!user }}>
+    <AuthContext.Provider value={{ user, login, verifyOtp, logout, isLoggedIn: !!user }}>
       {children}
     </AuthContext.Provider>
   )

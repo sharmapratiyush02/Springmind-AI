@@ -2,10 +2,10 @@ import { useEffect, useState, useCallback } from 'react'
 import { ticketService } from '../services/ticketService'
 
 const STATUS_META = {
-  OPEN: { label: '● Open', cls: 'status-open' },
+  OPEN:        { label: '● Open',        cls: 'status-open' },
   IN_PROGRESS: { label: '◐ In Progress', cls: 'status-in_progress' },
-  RESOLVED: { label: '✓ Resolved', cls: 'status-resolved' },
-  CLOSED: { label: '— Closed', cls: 'status-closed' },
+  RESOLVED:    { label: '✓ Resolved',    cls: 'status-resolved' },
+  CLOSED:      { label: '— Closed',      cls: 'status-closed' },
 }
 const PRI_DOT = { CRITICAL: 'p-critical', HIGH: 'p-high', MEDIUM: 'p-medium', LOW: 'p-low' }
 
@@ -16,32 +16,61 @@ const TABS = [
   { key: 'RESOLVED', label: 'Resolved' },
 ]
 
+/* ── CSV export helper (Enhancement 4 — Pratiyush Sharma) ── */
+function exportToCsv(tickets) {
+  const header = ['Ticket #','Title','Customer','Email','Tier','Category','Priority','Status','Agent','SLA Breached','Created']
+  const rows = tickets.map(t => [
+    t.ticketNumber, `"${t.title?.replace(/"/g,'""')}"`, t.customerName,
+    t.customerEmail, t.customerTier, t.category, t.priority, t.status,
+    t.assignedAgent?.name || 'Unassigned', t.slaBreached ? 'Yes' : 'No',
+    new Date(t.createdAt).toLocaleString()
+  ])
+  const csv = [header, ...rows].map(r => r.join(',')).join('\n')
+  const blob = new Blob([csv], { type: 'text/csv' })
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a')
+  a.href = url; a.download = `springmind-tickets-${Date.now()}.csv`; a.click()
+  URL.revokeObjectURL(url)
+}
+
 export default function TicketsPage() {
-  const [tickets, setTickets] = useState([])
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState('')
-  const [search, setSearch] = useState('')
-  const [selected, setSelected] = useState(null)
-  const [detail, setDetail] = useState(null)
+  const [tickets, setTickets]             = useState([])
+  const [total, setTotal]                 = useState(0)
+  const [loading, setLoading]             = useState(true)
+  const [tab, setTab]                     = useState('')
+  const [search, setSearch]               = useState('')
+  const [selected, setSelected]           = useState(null)
+  const [detail, setDetail]               = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
-  const [showCreate, setShowCreate] = useState(false)
-  const [comment, setComment] = useState('')
+  const [showCreate, setShowCreate]       = useState(false)
+  const [comment, setComment]             = useState('')
   const [submittingComment, setSubmittingComment] = useState(false)
+
+  /* ── Bulk selection state (Enhancement 4) ── */
+  const [checkedIds, setCheckedIds]       = useState(new Set())
+  const [bulkStatus, setBulkStatus]       = useState('')
+  const [bulkLoading, setBulkLoading]     = useState(false)
+  const [exportLoading, setExportLoading] = useState(false)
 
   const [form, setForm] = useState({
     title: '', description: '', customerName: '', customerEmail: '',
     customerTier: 'FREE', category: '', priority: '', channel: 'WEB_FORM'
   })
-  const [creating, setCreating] = useState(false)
+  const [creating, setCreating]       = useState(false)
   const [createError, setCreateError] = useState('')
 
   const load = useCallback(() => {
     setLoading(true)
-    ticketService.list({ status: tab || undefined, search: search || undefined, size: 30 })
-      .then(r => { setTickets(r.data.content || []); setTotal(r.data.totalElements || 0) })
-      .catch(console.error)
-      .finally(() => setLoading(false))
+    setCheckedIds(new Set())
+    // Auto-assign unassigned tickets to current agent on every load/refresh
+    ticketService.autoAssign()
+      .catch(() => {}) // ignore errors silently
+      .finally(() => {
+        ticketService.list({ status: tab || undefined, search: search || undefined, size: 50 })
+          .then(r => { setTickets(r.data.content || []); setTotal(r.data.totalElements || 0) })
+          .catch(console.error)
+          .finally(() => setLoading(false))
+      })
   }, [tab, search])
 
   useEffect(() => { load() }, [load])
@@ -57,7 +86,7 @@ export default function TicketsPage() {
   const updateStatus = (newStatus) => {
     if (!detail) return
     ticketService.update(detail.id, { status: newStatus })
-      .then(r => { setDetail(d => ({ ...d, status: r.data.status })); load(); })
+      .then(r => { setDetail(d => ({ ...d, status: r.data.status })); load() })
       .catch(console.error)
   }
 
@@ -65,10 +94,7 @@ export default function TicketsPage() {
     if (!comment.trim() || !detail) return
     setSubmittingComment(true)
     ticketService.addComment(detail.id, { body: comment, internalNote: false })
-      .then(() => {
-        setComment('')
-        ticketService.get(detail.id).then(r => setDetail(r.data))
-      })
+      .then(() => { setComment(''); ticketService.get(detail.id).then(r => setDetail(r.data)) })
       .catch(console.error)
       .finally(() => setSubmittingComment(false))
   }
@@ -79,9 +105,45 @@ export default function TicketsPage() {
     }
     setCreating(true); setCreateError('')
     ticketService.create(form)
-      .then(() => { setShowCreate(false); setForm({ title: '', description: '', customerName: '', customerEmail: '', customerTier: 'FREE', category: '', priority: '', channel: 'WEB_FORM' }); load() })
+      .then(() => {
+        setShowCreate(false)
+        setForm({ title: '', description: '', customerName: '', customerEmail: '', customerTier: 'FREE', category: '', priority: '', channel: 'WEB_FORM' })
+        load()
+      })
       .catch(err => setCreateError(err.response?.data?.message || 'Error creating ticket'))
       .finally(() => setCreating(false))
+  }
+
+  /* ── Bulk helpers (Enhancement 4 — Pratiyush Sharma) ── */
+  const toggleCheck = (e, id) => {
+    e.stopPropagation()
+    setCheckedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const toggleAll = () => {
+    if (checkedIds.size === tickets.length) setCheckedIds(new Set())
+    else setCheckedIds(new Set(tickets.map(t => t.id)))
+  }
+
+  const applyBulkStatus = async () => {
+    if (!bulkStatus || checkedIds.size === 0) return
+    setBulkLoading(true)
+    try {
+      await Promise.all([...checkedIds].map(id => ticketService.update(id, { status: bulkStatus })))
+      setCheckedIds(new Set()); setBulkStatus('')
+      load()
+    } catch(e) { console.error(e) }
+    finally { setBulkLoading(false) }
+  }
+
+  const handleExport = () => {
+    setExportLoading(true)
+    const toExport = checkedIds.size > 0 ? tickets.filter(t => checkedIds.has(t.id)) : tickets
+    setTimeout(() => { exportToCsv(toExport); setExportLoading(false) }, 100)
   }
 
   const sentColor = { NEGATIVE: 'var(--red)', POSITIVE: 'var(--green)', NEUTRAL: 'var(--muted)' }
@@ -93,18 +155,26 @@ export default function TicketsPage() {
         <div style={{ fontFamily: 'var(--font-head)', fontSize: 20, fontWeight: 700, flex: 1 }}>
           All Tickets <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--muted)', fontWeight: 400 }}>({total})</span>
         </div>
+        {/* Search */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 8, padding: '7px 12px' }}>
           <span style={{ color: 'var(--muted)' }}>🔍</span>
-          <input style={{ background: 'none', border: 'none', outline: 'none', color: 'var(--text)', width: 200, fontSize: 13 }}
+          <input style={{ background: 'none', border: 'none', outline: 'none', color: 'var(--text)', width: 180, fontSize: 13 }}
             placeholder="Search tickets…" value={search}
             onChange={e => setSearch(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && load()} />
         </div>
+        {/* Export CSV button (Enhancement 4) */}
+        <button className="btn" onClick={handleExport} disabled={exportLoading}
+          title={checkedIds.size > 0 ? `Export ${checkedIds.size} selected` : 'Export all tickets'}
+          style={{ gap: 6 }}>
+          {exportLoading ? <div className="spinner" style={{ width: 14, height: 14 }} /> : '⬇'}
+          {checkedIds.size > 0 ? `CSV (${checkedIds.size})` : 'Export CSV'}
+        </button>
         <button className="btn primary" onClick={() => setShowCreate(true)}>+ New Ticket</button>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid var(--border)', marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid var(--border)', marginBottom: checkedIds.size > 0 ? 0 : 20 }}>
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)} style={{
             padding: '8px 16px', background: 'none', border: 'none', cursor: 'pointer',
@@ -115,29 +185,63 @@ export default function TicketsPage() {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 420px' : '1fr', gap: 16 }}>
+      {/* ── Bulk Action Toolbar (Enhancement 4 — Pratiyush Sharma) ── */}
+      {checkedIds.size > 0 && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          background: 'rgba(79,142,247,0.08)', border: '1px solid rgba(79,142,247,0.2)',
+          borderRadius: 10, padding: '10px 16px', marginTop: 12, marginBottom: 12
+        }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)' }}>
+            {checkedIds.size} selected
+          </div>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <select className="form-select" style={{ width: 180, padding: '6px 10px' }}
+              value={bulkStatus} onChange={e => setBulkStatus(e.target.value)}>
+              <option value="">Change status to…</option>
+              {['OPEN','IN_PROGRESS','RESOLVED','CLOSED'].map(s => <option key={s}>{s}</option>)}
+            </select>
+            <button className="btn primary" disabled={!bulkStatus || bulkLoading}
+              onClick={applyBulkStatus} style={{ padding: '6px 14px', fontSize: 13 }}>
+              {bulkLoading ? <><div className="spinner" style={{ width: 14, height: 14 }} /> Applying…</> : '✓ Apply'}
+            </button>
+          </div>
+          <button className="btn" onClick={() => setCheckedIds(new Set())} style={{ fontSize: 12 }}>Clear</button>
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 420px' : '1fr', gap: 16, marginTop: checkedIds.size > 0 ? 0 : undefined }}>
         {/* Table */}
         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 130px 100px 120px 100px', padding: '10px 20px', borderBottom: '1px solid var(--border)', fontSize: 11, color: 'var(--muted)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+          {/* Header */}
+          <div style={{ display: 'grid', gridTemplateColumns: '36px 90px 1fr 130px 100px 120px 100px', padding: '10px 20px', borderBottom: '1px solid var(--border)', fontSize: 11, color: 'var(--muted)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.8px', alignItems: 'center' }}>
+            <input type="checkbox" style={{ cursor: 'pointer', accentColor: 'var(--accent)' }}
+              checked={tickets.length > 0 && checkedIds.size === tickets.length}
+              onChange={toggleAll} />
             <div>ID</div><div>Issue</div><div>Category</div><div>Priority</div><div>Status</div><div>Agent</div>
           </div>
+
           {loading
             ? <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}><div className="spinner" />Loading…</div>
             : tickets.length === 0
               ? <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)' }}>No tickets found</div>
               : tickets.map((t, i) => (
                 <div key={t.id} onClick={() => openDetail(t.id)} style={{
-                  display: 'grid', gridTemplateColumns: '90px 1fr 130px 100px 120px 100px',
+                  display: 'grid', gridTemplateColumns: '36px 90px 1fr 130px 100px 120px 100px',
                   padding: '13px 20px', borderBottom: i < tickets.length - 1 ? '1px solid var(--border)' : 'none',
                   cursor: 'pointer', alignItems: 'center', transition: 'background 0.1s',
-                  background: selected === t.id ? 'var(--surface2)' : 'transparent'
+                  background: selected === t.id ? 'var(--surface2)' : checkedIds.has(t.id) ? 'rgba(79,142,247,0.06)' : 'transparent'
                 }}
-                  onMouseEnter={e => { if (selected !== t.id) e.currentTarget.style.background = 'var(--surface2)' }}
-                  onMouseLeave={e => { if (selected !== t.id) e.currentTarget.style.background = 'transparent' }}>
+                  onMouseEnter={e => { if (selected !== t.id && !checkedIds.has(t.id)) e.currentTarget.style.background = 'var(--surface2)' }}
+                  onMouseLeave={e => { if (selected !== t.id && !checkedIds.has(t.id)) e.currentTarget.style.background = 'transparent' }}>
+                  <div onClick={e => e.stopPropagation()}>
+                    <input type="checkbox" style={{ cursor: 'pointer', accentColor: 'var(--accent)' }}
+                      checked={checkedIds.has(t.id)} onChange={e => toggleCheck(e, t.id)} />
+                  </div>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--muted)' }}>{t.ticketNumber}</div>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 500 }}>{t.title}</div>
-                    <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 260 }}>{t.description}</div>
+                    <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 240 }}>{t.description}</div>
                   </div>
                   <div><span className={`pill pill-${t.category?.toLowerCase()}`}>{t.category?.replace('_', ' ') || '—'}</span></div>
                   <div style={{ fontSize: 12 }}><span className={`priority-dot ${PRI_DOT[t.priority]}`} />{t.priority}</div>
@@ -184,6 +288,7 @@ export default function TicketsPage() {
                       ['Confidence', `${Math.round((detail.aiConfidence || 0) * 100)}%`],
                       ['Est. Resolution', `${detail.predictedResolutionHours || '?'}h`],
                       ['SLA Deadline', detail.slaDeadline ? new Date(detail.slaDeadline).toLocaleString() : '—'],
+                      ['SLA Breached', detail.slaBreached ? <span style={{ color: 'var(--red)' }}>Yes ⚠</span> : <span style={{ color: 'var(--green)' }}>No</span>],
                     ].map(([k, v]) => (
                       <div key={k} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 12 }}>
                         <span style={{ color: 'var(--muted)' }}>{k}</span>
@@ -241,11 +346,7 @@ export default function TicketsPage() {
             <button onClick={() => setShowCreate(false)} style={{ position: 'absolute', top: 16, right: 16, background: 'var(--surface2)', border: 'none', color: 'var(--muted)', cursor: 'pointer', width: 28, height: 28, borderRadius: 6, fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
             <div style={{ fontFamily: 'var(--font-head)', fontSize: 20, fontWeight: 700, marginBottom: 20 }}>🤖 Create New Ticket</div>
 
-            {[
-              ['Title *', 'title', 'text', 'Brief issue summary'],
-              ['Customer Name *', 'customerName', 'text', 'John Smith'],
-              ['Customer Email *', 'customerEmail', 'email', 'john@company.com'],
-            ].map(([label, key, type, ph]) => (
+            {[['Title *', 'title', 'text', 'Brief issue summary'], ['Customer Name *', 'customerName', 'text', 'John Smith'], ['Customer Email *', 'customerEmail', 'email', 'john@company.com']].map(([label, key, type, ph]) => (
               <div key={key} style={{ marginBottom: 14 }}>
                 <label className="form-label">{label}</label>
                 <input className="form-input" type={type} placeholder={ph}
@@ -267,7 +368,7 @@ export default function TicketsPage() {
                 </select>
               </div>
               <div>
-                <label className="form-label">Priority (AI will auto-detect)</label>
+                <label className="form-label">Priority (AI auto-detects)</label>
                 <select className="form-select" value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))}>
                   <option value="">Auto (AI)</option>
                   {['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map(v => <option key={v}>{v}</option>)}

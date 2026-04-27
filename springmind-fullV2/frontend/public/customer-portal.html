@@ -37,6 +37,14 @@ input::placeholder{color:var(--muted);}
 .auth-switch a{color:var(--accent);text-decoration:none;cursor:pointer;}
 .err{background:rgba(242,92,92,.1);border:1px solid rgba(242,92,92,.3);border-radius:8px;padding:10px 13px;color:var(--red);font-size:13px;margin-top:12px;display:none;}
 .err.show{display:block;}
+.ok{background:rgba(45,212,160,.1);border:1px solid rgba(45,212,160,.3);border-radius:8px;padding:10px 13px;color:var(--green);font-size:13px;margin-top:12px;display:none;}
+.ok.show{display:block;}
+/* CAPTCHA widget (Enhancement 1 — Soham Satpute) */
+.captcha-wrap{background:rgba(79,142,247,.06);border:1px solid rgba(79,142,247,.2);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:14px;transition:border-color .2s;}
+.captcha-chk{width:26px;height:26px;border-radius:6px;background:var(--surface2);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;transition:all .2s;color:var(--muted);font-weight:700;}
+.captcha-expr{font-family:var(--fh);font-size:18px;font-weight:800;background:linear-gradient(135deg,var(--accent2),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap;letter-spacing:-0.5px;}
+.captcha-num{width:64px;background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:6px 8px;color:var(--text);font-family:var(--fm);font-size:15px;outline:none;text-align:center;font-weight:700;}
+.captcha-msg{font-size:11px;font-family:var(--fm);margin-top:4px;}
 /* App layout */
 .app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;height:56px;display:flex;align-items:center;gap:14px;}
 .app-logo{display:flex;align-items:center;gap:9px;}
@@ -80,6 +88,18 @@ input::placeholder{color:var(--muted);}
 .prog-label{display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;}
 .prog-track{height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;}
 .prog-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .6s;}
+/* Status timeline — horizontal (Enhancement 5) */
+.st-track{display:flex;align-items:flex-start;position:relative;}
+.st-track::before{content:'';position:absolute;top:15px;left:15px;right:15px;height:2px;background:var(--surface3);z-index:0;}
+.st-step{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;z-index:1;}
+.st-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;border:2px solid var(--surface3);background:var(--surface);transition:all .3s;}
+.st-dot.done{background:var(--green);border-color:var(--green);color:#fff;}
+.st-dot.active{background:var(--accent);border-color:var(--accent);color:#fff;animation:stPulse 2s infinite;}
+.st-dot.pending{background:var(--surface2);color:var(--muted);}
+@keyframes stPulse{0%,100%{box-shadow:0 0 0 0 rgba(79,142,247,.3)}50%{box-shadow:0 0 0 6px rgba(79,142,247,0)}}
+.st-label{font-size:10px;font-weight:600;text-align:center;color:var(--muted);}
+.st-label.done,.st-label.active{color:var(--text);}
+.st-step.done::after{content:'';position:absolute;top:15px;left:50%;right:-50%;height:2px;background:var(--green);z-index:-1;}
 /* Pills */
 .pill{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-family:var(--fm);}
 .p-open{background:rgba(79,142,247,.15);color:var(--accent);}
@@ -147,10 +167,32 @@ select option{background:var(--surface);}
     <div id="loginForm">
       <div class="form-group"><label>Email</label><input type="email" id="loginEmail" placeholder="you@company.com"></div>
       <div class="form-group"><label>Password</label><input type="password" id="loginPass" placeholder="Your password"></div>
+      <!-- CAPTCHA (Enhancement 1 — Soham Satpute) -->
+      <label style="display:block;font-size:10px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Security Check</label>
+      <div class="captcha-wrap" id="loginCaptchaBox">
+        <div class="captcha-chk" id="loginCaptchaIcon">?</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="captcha-expr" id="loginCaptchaExpr">…</span>
+            <input class="captcha-num" type="number" id="loginCaptchaInp" placeholder="?" oninput="checkCaptcha('login')">
+          </div>
+          <div class="captcha-msg" id="loginCaptchaMsg" style="color:var(--muted)">Solve to verify</div>
+        </div>
+        <button onclick="initCaptcha('login')" type="button" title="New challenge" style="background:none;border:1px solid var(--border2);border-radius:5px;width:24px;height:24px;cursor:pointer;color:var(--muted);font-size:13px;flex-shrink:0;">↻</button>
+      </div>
       <div class="err" id="loginErr"></div>
-      <button class="auth-btn" id="loginBtn" onclick="doLogin()">Sign In →</button>
+      <div class="ok" id="loginOk"></div>
+      <button class="auth-btn" id="loginBtn" onclick="doLogin()" disabled>Sign In →</button>
       <div class="auth-switch">No account? <a onclick="switchToRegister()">Create one free →</a></div>
+      <div class="auth-switch" style="margin-top:8px"><a onclick="switchToForgot()">Forgot password?</a></div>
       <div class="auth-switch" style="margin-top:8px"><a href="track-ticket.html" style="color:var(--muted)">Just track a ticket without login →</a></div>
+      <!-- Demo credentials -->
+      <div style="margin-top:16px;background:var(--surface2);border-radius:10px;padding:12px 14px;font-size:11px;font-family:var(--fm);color:var(--muted)">
+        <div style="text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Demo Customer Account</div>
+        <div>📧 john@demo.com</div>
+        <div>🔑 Demo@123</div>
+        <div style="margin-top:6px;color:var(--accent)">3 pre-existing tickets to explore →</div>
+      </div>
     </div>
 
     <!-- Register Form -->
@@ -158,9 +200,46 @@ select option{background:var(--surface);}
       <div class="form-group"><label>Full Name</label><input type="text" id="regName" placeholder="John Smith"></div>
       <div class="form-group"><label>Email</label><input type="email" id="regEmail" placeholder="you@company.com"></div>
       <div class="form-group"><label>Password</label><input type="password" id="regPass" placeholder="Min. 6 characters"></div>
+      <!-- CAPTCHA (Enhancement 1 — Soham Satpute) -->
+      <label style="display:block;font-size:10px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Security Check</label>
+      <div class="captcha-wrap" id="regCaptchaBox">
+        <div class="captcha-chk" id="regCaptchaIcon">?</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="captcha-expr" id="regCaptchaExpr">…</span>
+            <input class="captcha-num" type="number" id="regCaptchaInp" placeholder="?" oninput="checkCaptcha('reg')">
+          </div>
+          <div class="captcha-msg" id="regCaptchaMsg" style="color:var(--muted)">Solve to verify</div>
+        </div>
+        <button onclick="initCaptcha('reg')" type="button" title="New challenge" style="background:none;border:1px solid var(--border2);border-radius:5px;width:24px;height:24px;cursor:pointer;color:var(--muted);font-size:13px;flex-shrink:0;">↻</button>
+      </div>
       <div class="err" id="regErr"></div>
-      <button class="auth-btn" id="regBtn" onclick="doRegister()">Create Account →</button>
+      <button class="auth-btn" id="regBtn" onclick="doRegister()" disabled>Create Account →</button>
       <div class="auth-switch">Already have an account? <a onclick="switchToLogin()">Sign in →</a></div>
+    </div>
+
+    <div id="otpForm" style="display:none">
+      <div class="form-group"><label>Email Verification Code</label><input type="text" id="otpCode" maxlength="6" inputmode="numeric" placeholder="6-digit code"></div>
+      <div class="err" id="otpErr"></div>
+      <div class="ok" id="otpOk"></div>
+      <button class="auth-btn" id="otpBtn" onclick="doVerifyOtp()">Verify and Sign In</button>
+      <div class="auth-switch"><a onclick="switchToLogin()">Back to sign in</a></div>
+    </div>
+
+    <div id="forgotForm" style="display:none">
+      <div class="form-group"><label>Registered Email</label><input type="email" id="forgotEmail" placeholder="you@company.com"></div>
+      <div class="err" id="forgotErr"></div>
+      <div class="ok" id="forgotOk"></div>
+      <button class="auth-btn" id="forgotBtn" onclick="doForgotPassword()">Send reset link</button>
+      <div class="auth-switch"><a onclick="switchToLogin()">Back to sign in</a></div>
+    </div>
+
+    <div id="resetForm" style="display:none">
+      <div class="form-group"><label>New Password</label><input type="password" id="resetPass" placeholder="Min. 8 characters"></div>
+      <div class="err" id="resetErr"></div>
+      <div class="ok" id="resetOk"></div>
+      <button class="auth-btn" id="resetBtn" onclick="doResetPassword()">Reset password</button>
+      <div class="auth-switch"><a onclick="switchToLogin()">Back to sign in</a></div>
     </div>
   </div>
 </div>
@@ -261,17 +340,49 @@ select option{background:var(--surface);}
 </div>
 
 <script>
-const API = 'https://springmind-backend.onrender.com/api';
+// ── Auto-detect local vs production API ─────────────────────────────────
+const IS_LOCAL = !location.hostname || location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+  || ['3000','5173','5500','5501'].includes(location.port);
+// Use direct URL — same approach as React admin app (VITE_API_URL=http://localhost:8080/api)
+const API = IS_LOCAL ? 'http://localhost:8080/api' : 'https://springmind-backend.onrender.com/api';
+
+// ── Fetch with 10-second timeout (prevents infinite spinner) ──────────────
+async function fetchWithTimeout(url, opts = {}, ms = 10000) {
+  const ctrl = new AbortController();
+  const id = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const r = await fetch(url, { ...opts, signal: ctrl.signal });
+    clearTimeout(id);
+    return r;
+  } catch (e) {
+    clearTimeout(id);
+    if (e.name === 'AbortError') throw new Error('Request timed out — is the backend running on port 8080?');
+    throw e;
+  }
+}
+
+async function safeJson(res) {
+  try { return await res.json(); }
+  catch { return { message: res.ok ? 'Request completed' : 'Server returned an unreadable response' }; }
+}
 let TOKEN = localStorage.getItem('cp_token');
 let USER  = JSON.parse(localStorage.getItem('cp_user') || 'null');
+let OTP_CHALLENGE = null;
+const RESET_TOKEN = new URLSearchParams(window.location.search).get('resetToken') || '';
 
-// ── Boot ───────────────────────────────────────────────────────────────────
-if (TOKEN && USER) showApp();
-else showAuth();
+// ── Boot — run only after DOM is fully loaded ───────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  if (RESET_TOKEN) switchToReset();
+  else if (TOKEN && USER) showApp();
+  else showAuth();
+  // Handle #register hash in URL
+  if (window.location.hash === '#register') switchToRegister();
+});
 
 function showAuth() {
   document.getElementById('authScreen').style.display = 'flex';
   document.getElementById('appShell').style.display = 'none';
+  initCaptcha('login');
 }
 
 function showApp() {
@@ -285,18 +396,117 @@ function showApp() {
 }
 
 function switchToRegister() {
+  hideAuthForms();
   document.getElementById('loginForm').style.display = 'none';
   document.getElementById('registerForm').style.display = 'block';
   document.getElementById('authSub').textContent = 'Create your free customer account';
+  initCaptcha('reg');
 }
 function switchToLogin() {
-  document.getElementById('registerForm').style.display = 'none';
+  hideAuthForms();
   document.getElementById('loginForm').style.display = 'block';
   document.getElementById('authSub').textContent = 'Sign in to manage your support tickets';
+  OTP_CHALLENGE = null;
+  initCaptcha('login');
+}
+
+function switchToOtp(message) {
+  hideAuthForms();
+  document.getElementById('otpForm').style.display = 'block';
+  document.getElementById('authSub').textContent = 'Enter the verification code sent to your email';
+  const ok = document.getElementById('otpOk');
+  ok.textContent = message || 'Verification code sent to registered email';
+  ok.classList.add('show');
+}
+
+function switchToForgot() {
+  hideAuthForms();
+  document.getElementById('forgotEmail').value = document.getElementById('loginEmail').value.trim();
+  document.getElementById('forgotForm').style.display = 'block';
+  document.getElementById('authSub').textContent = 'Reset your customer portal password';
+}
+
+function switchToReset() {
+  hideAuthForms();
+  document.getElementById('authScreen').style.display = 'flex';
+  document.getElementById('appShell').style.display = 'none';
+  document.getElementById('resetForm').style.display = 'block';
+  document.getElementById('authSub').textContent = 'Choose a new password';
+}
+
+function hideAuthForms() {
+  ['loginForm','registerForm','otpForm','forgotForm','resetForm'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  document.querySelectorAll('.err,.ok').forEach(el => el.classList.remove('show'));
+}
+
+// ── CAPTCHA (Enhancement 1 — Soham Satpute) ───────────────────────────────
+const captchaState = {};
+
+function genChallenge() {
+  const ops = ['+', '-', '×'];
+  const op  = ops[Math.floor(Math.random() * ops.length)];
+  let a, b, ans;
+  if (op === '+') { a = Math.floor(Math.random()*20)+1; b = Math.floor(Math.random()*20)+1; ans = a+b; }
+  else if (op === '-') { a = Math.floor(Math.random()*20)+10; b = Math.floor(Math.random()*a)+1; ans = a-b; }
+  else { a = Math.floor(Math.random()*9)+2; b = Math.floor(Math.random()*9)+2; ans = a*b; }
+  return { expr: `${a} ${op} ${b} = ?`, answer: String(ans) };
+}
+
+function initCaptcha(prefix) {
+  const ch = genChallenge();
+  captchaState[prefix] = { answer: ch.answer, ok: false };
+  const el = document.getElementById(prefix + 'CaptchaExpr');
+  const inp = document.getElementById(prefix + 'CaptchaInp');
+  const btn = document.getElementById(prefix + 'Btn');
+  if (el) el.textContent = ch.expr;
+  if (inp) inp.value = '';
+  if (btn) btn.disabled = true;
+  resetCaptchaUI(prefix);
+}
+
+function resetCaptchaUI(prefix) {
+  const box  = document.getElementById(prefix + 'CaptchaBox');
+  const icon = document.getElementById(prefix + 'CaptchaIcon');
+  const msg  = document.getElementById(prefix + 'CaptchaMsg');
+  if (!box) return;
+  box.style.borderColor = 'rgba(255,255,255,0.13)';
+  icon.textContent = '?'; icon.style.background = 'var(--surface2)';
+  icon.style.color = 'var(--muted)'; icon.style.borderColor = 'rgba(255,255,255,0.13)';
+  msg.textContent = 'Answer the math question to continue'; msg.style.color = 'var(--muted)';
+}
+
+function checkCaptcha(prefix) {
+  const val = document.getElementById(prefix + 'CaptchaInp').value.trim();
+  const box  = document.getElementById(prefix + 'CaptchaBox');
+  const icon = document.getElementById(prefix + 'CaptchaIcon');
+  const msg  = document.getElementById(prefix + 'CaptchaMsg');
+  const btn  = document.getElementById(prefix + 'Btn');
+  const state = captchaState[prefix];
+  if (!val || !state) return;
+  if (val === state.answer) {
+    state.ok = true;
+    box.style.borderColor = 'var(--green)';
+    icon.textContent = '✓'; icon.style.background = 'var(--green)';
+    icon.style.color = '#fff'; icon.style.borderColor = 'var(--green)';
+    msg.textContent = '✓ Verified!'; msg.style.color = 'var(--green)';
+    if (btn) btn.disabled = false;
+  } else if (val.length >= state.answer.length) {
+    state.ok = false;
+    box.style.borderColor = 'var(--red)';
+    icon.textContent = '✕'; icon.style.background = 'var(--red)';
+    icon.style.color = '#fff'; icon.style.borderColor = 'var(--red)';
+    msg.textContent = 'Wrong — refreshing…'; msg.style.color = 'var(--red)';
+    if (btn) btn.disabled = true;
+    setTimeout(() => initCaptcha(prefix), 1100);
+  }
 }
 
 // ── Auth ───────────────────────────────────────────────────────────────────
 async function doLogin() {
+  if (!captchaState['login']?.ok) { const e=document.getElementById('loginErr'); e.textContent='Please complete the CAPTCHA.'; e.classList.add('show'); return; }
   const email = document.getElementById('loginEmail').value.trim();
   const pass  = document.getElementById('loginPass').value;
   const err   = document.getElementById('loginErr');
@@ -305,21 +515,96 @@ async function doLogin() {
   if (!email || !pass) { err.textContent='Please fill in all fields.'; err.classList.add('show'); return; }
   btn.disabled=true; btn.innerHTML='<div class="spin"></div> Signing in…';
   try {
-    const res  = await fetch(`${API}/customer/login`, {
+    const res  = await fetchWithTimeout(`${API}/customer/login`, {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({email, password: pass})
     });
-    const data = await res.json();
+    const data = await safeJson(res);
     if (!res.ok) throw new Error(data.message || 'Invalid email or password');
+    if (data.otpRequired) {
+      OTP_CHALLENGE = data.challengeToken;
+      switchToOtp((data.message || 'Verification code sent to registered email') + (data.debugOtp ? ` (Dev OTP: ${data.debugOtp})` : ''));
+      return;
+    }
+    TOKEN = data.accessToken; USER = data.user;
+    localStorage.setItem('cp_token', TOKEN);
+    localStorage.setItem('cp_user', JSON.stringify(USER));
+    showApp();
+  } catch(e) { err.textContent=e.message; err.classList.add('show'); initCaptcha('login'); }
+  finally { btn.disabled=false; btn.innerHTML='Sign In →'; }
+}
+
+async function doVerifyOtp() {
+  const otp = document.getElementById('otpCode').value.trim();
+  const err = document.getElementById('otpErr');
+  const btn = document.getElementById('otpBtn');
+  err.classList.remove('show');
+  if (!OTP_CHALLENGE || !/^\d{6}$/.test(otp)) {
+    err.textContent = 'Enter the 6-digit verification code.';
+    err.classList.add('show');
+    return;
+  }
+  btn.disabled = true; btn.innerHTML = '<div class="spin"></div> Verifying...';
+  try {
+    const res = await fetchWithTimeout(`${API}/customer/verify-otp`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({challengeToken: OTP_CHALLENGE, otp})
+    });
+    const data = await safeJson(res);
+    if (!res.ok) throw new Error(data.message || 'Invalid verification code');
     TOKEN = data.accessToken; USER = data.user;
     localStorage.setItem('cp_token', TOKEN);
     localStorage.setItem('cp_user', JSON.stringify(USER));
     showApp();
   } catch(e) { err.textContent=e.message; err.classList.add('show'); }
-  finally { btn.disabled=false; btn.innerHTML='Sign In →'; }
+  finally { btn.disabled=false; btn.innerHTML='Verify and Sign In'; }
+}
+
+async function doForgotPassword() {
+  const email = document.getElementById('forgotEmail').value.trim();
+  const err = document.getElementById('forgotErr');
+  const ok = document.getElementById('forgotOk');
+  const btn = document.getElementById('forgotBtn');
+  err.classList.remove('show'); ok.classList.remove('show');
+  if (!email) { err.textContent='Enter your registered email.'; err.classList.add('show'); return; }
+  btn.disabled = true; btn.innerHTML = '<div class="spin"></div> Sending...';
+  try {
+    const res = await fetchWithTimeout(`${API}/customer/forgot-password`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email})
+    });
+    const data = await safeJson(res);
+    if (!res.ok) throw new Error(data.message || 'Unable to send reset link');
+    ok.textContent = data.message || 'If the email is registered, a password reset link has been sent';
+    ok.classList.add('show');
+  } catch(e) { err.textContent=e.message || 'Unable to send reset link'; err.classList.add('show'); }
+  finally { btn.disabled=false; btn.innerHTML='Send reset link'; }
+}
+
+async function doResetPassword() {
+  const pass = document.getElementById('resetPass').value;
+  const err = document.getElementById('resetErr');
+  const ok = document.getElementById('resetOk');
+  const btn = document.getElementById('resetBtn');
+  err.classList.remove('show'); ok.classList.remove('show');
+  if (pass.length < 8) { err.textContent='Password must be at least 8 characters.'; err.classList.add('show'); return; }
+  btn.disabled = true; btn.innerHTML = '<div class="spin"></div> Resetting...';
+  try {
+    const res = await fetchWithTimeout(`${API}/customer/reset-password`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({token: RESET_TOKEN, newPassword: pass})
+    });
+    const data = await safeJson(res);
+    if (!res.ok) throw new Error(data.message || 'Unable to reset password');
+    ok.textContent = data.message || 'Password reset successful';
+    ok.classList.add('show');
+    setTimeout(() => { history.replaceState(null, '', location.pathname); switchToLogin(); }, 1200);
+  } catch(e) { err.textContent=e.message || 'Unable to reset password'; err.classList.add('show'); }
+  finally { btn.disabled=false; btn.innerHTML='Reset password'; }
 }
 
 async function doRegister() {
+  if (!captchaState['reg']?.ok) { const e=document.getElementById('regErr'); e.textContent='Please complete the CAPTCHA.'; e.classList.add('show'); return; }
   const name  = document.getElementById('regName').value.trim();
   const email = document.getElementById('regEmail').value.trim();
   const pass  = document.getElementById('regPass').value;
@@ -330,7 +615,7 @@ async function doRegister() {
   if (pass.length < 6) { err.textContent='Password must be at least 6 characters.'; err.classList.add('show'); return; }
   btn.disabled=true; btn.innerHTML='<div class="spin"></div> Creating account…';
   try {
-    const res  = await fetch(`${API}/customer/register`, {
+    const res  = await fetchWithTimeout(`${API}/customer/register`, {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({fullName:name, email, password:pass})
     });
@@ -340,7 +625,7 @@ async function doRegister() {
     localStorage.setItem('cp_token', TOKEN);
     localStorage.setItem('cp_user', JSON.stringify(USER));
     showApp();
-  } catch(e) { err.textContent=e.message; err.classList.add('show'); }
+  } catch(e) { err.textContent=e.message; err.classList.add('show'); initCaptcha('reg'); }
   finally { btn.disabled=false; btn.innerHTML='Create Account →'; }
 }
 
@@ -351,10 +636,10 @@ function doLogout() {
 
 // ── API helper ─────────────────────────────────────────────────────────────
 async function apiFetch(path, opts={}) {
-  const res = await fetch(`${API}${path}`, {
+  const res = await fetchWithTimeout(`${API}${path}`, {
     ...opts,
     headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${TOKEN}`, ...(opts.headers||{}) }
-  });
+  }, 12000);
   if (res.status===401) { doLogout(); return null; }
   return res.json();
 }
@@ -441,6 +726,19 @@ async function openDetail(ticketNumber) {
   if (!t) return;
 
   const sc = (t.status||'').toLowerCase().replace('_','-');
+
+  // Status timeline
+  const STEPS = [
+    {label:'Received', icon:'📩'}, {label:'Reviewing', icon:'🔍'},
+    {label:'In Progress', icon:'⚙️'}, {label:'Resolved', icon:'✅'}
+  ];
+  const stageMap = {OPEN:1,IN_PROGRESS:2,RESOLVED:3,CLOSED:3};
+  const stage = stageMap[t.status] ?? 0;
+  const timelineHTML = STEPS.map((s,i) => {
+    const done=i<stage, active=i===stage;
+    return `<div class="st-step ${done?'done':''}"><div class="st-dot ${done?'done':active?'active':'pending'}">${done?'✓':s.icon}</div><div class="st-label ${done?'done':active?'active':'pending'}">${s.label}</div></div>`;
+  }).join('');
+
   const comments = (t.comments || []).map(c => {
     const isCustomer = c.body?.startsWith('[Customer]');
     return `<div class="comment ${isCustomer?'customer-msg':''}">
@@ -459,12 +757,15 @@ async function openDetail(ticketNumber) {
       <span class="pill p-${sc}" style="font-size:12px;padding:5px 12px">${(t.status||'').replace('_',' ')}</span>
     </div>
 
-    <div class="prog-wrap" style="margin-bottom:20px">
-      <div class="prog-label">
-        <span style="color:var(--muted)">${t.statusLabel}</span>
-        <span style="font-family:var(--fm);color:var(--accent)">${t.progressPercent}% complete</span>
+    <div style="margin-bottom:18px">
+      <div style="background:var(--surface2);border-radius:12px;padding:16px;">
+        <div style="font-size:10px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;text-align:center;">📍 Ticket Journey</div>
+        <div class="st-track">${timelineHTML}</div>
       </div>
-      <div class="prog-track" style="height:6px"><div class="prog-fill" style="width:${t.progressPercent}%"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;">
+        <span style="color:var(--muted)">${t.statusLabel || ''}</span>
+        <span style="font-family:var(--fm);color:var(--accent)">${t.progressPercent || 0}% complete</span>
+      </div>
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
@@ -538,21 +839,45 @@ async function doSubmit() {
     if (!res) return;
     if (res.message?.includes('error') || res.status >= 400) throw new Error(res.message);
 
+    // ── Success: show confirmation with ticket number + cross-links ──────────
     document.getElementById('subResult').innerHTML = `
-      <div style="margin-top:20px;background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.25);border-radius:12px;padding:18px">
-        <div style="font-size:18px;margin-bottom:8px">✅ Ticket Submitted!</div>
-        <div style="font-family:var(--fm);font-size:13px;color:var(--green);margin-bottom:10px">${res.ticketNumber}</div>
-        <div style="font-size:13px;color:var(--muted);line-height:1.7">${res.message}</div>
-        <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+      <div style="margin-top:20px;background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.25);border-radius:14px;padding:20px">
+        <div style="font-size:20px;margin-bottom:10px">✅ Ticket Submitted Successfully!</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="font-family:var(--fm);font-size:15px;color:var(--green);font-weight:700">${res.ticketNumber}</span>
+          <button onclick="navigator.clipboard?.writeText('${res.ticketNumber}');showToast('Copied!')"
+            style="background:rgba(45,212,160,.15);border:none;border-radius:5px;padding:3px 8px;color:var(--green);font-family:var(--fm);font-size:10px;cursor:pointer;">COPY</button>
+        </div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:12px">${res.message}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
           <span class="pill p-${(res.priority||'').toLowerCase()}">${res.priority}</span>
           <span class="pill" style="background:var(--surface3);color:var(--muted)">${(res.category||'').replace('_',' ')}</span>
         </div>
-        <button class="btn" style="margin-top:14px" onclick="showPage('tickets',document.querySelectorAll('.nav-btn')[1]);loadTickets()">View My Tickets →</button>
+        <div style="background:rgba(79,142,247,.07);border:1px solid rgba(79,142,247,.15);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px">
+          <div style="font-weight:600;margin-bottom:4px">📋 Track this ticket without login:</div>
+          <div style="font-family:var(--fm);color:var(--muted)">
+            Go to <a href="track-ticket.html" style="color:var(--accent)">Track Ticket page</a>
+            and enter <strong style="color:var(--text)">${res.ticketNumber}</strong> + your email.
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn primary" onclick="goToMyTickets()">View My Tickets →</button>
+          <button class="btn" onclick="document.getElementById('subResult').innerHTML='';document.getElementById('subTitle').value='';document.getElementById('subDesc').value='';">Submit Another</button>
+        </div>
       </div>`;
+
     document.getElementById('subTitle').value='';
     document.getElementById('subDesc').value='';
+
+    // Auto-navigate to My Tickets after 3 seconds
+    setTimeout(() => goToMyTickets(), 3000);
+
   } catch(e) { err.textContent=e.message||'Submission failed'; err.classList.add('show'); }
   finally { btn.disabled=false; btn.innerHTML='🤖 AI Classify & Submit'; }
+}
+
+function goToMyTickets() {
+  showPage('tickets', document.querySelectorAll('.nav-btn')[1]);
 }
 
 // ── Navigation ─────────────────────────────────────────────────────────────
@@ -572,8 +897,8 @@ function showToast(msg) {
   setTimeout(()=>t.style.opacity='0',2500); setTimeout(()=>t.remove(),3000);
 }
 
-// Check if URL has #register
-if (window.location.hash==='#register') switchToRegister();
+// #register hash is handled in DOMContentLoaded above
+
 </script>
 </body>
 </html>

@@ -7,6 +7,7 @@ import com.springmind.ai.model.User;
 import com.springmind.ai.repository.TicketCommentRepository;
 import com.springmind.ai.repository.TicketRepository;
 import com.springmind.ai.repository.UserRepository;
+import com.springmind.ai.service.AuthService;
 import com.springmind.ai.service.TicketService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -31,6 +32,7 @@ public class CustomerPortalController {
     private final PasswordEncoder         encoder;
     private final JwtUtils                jwtUtils;
     private final TicketService           ticketService;
+    private final AuthService             authService;
 
     // ── No-login lookup ───────────────────────────────────────────────────────
 
@@ -91,17 +93,34 @@ public class CustomerPortalController {
             throw new org.springframework.security.authentication
                 .BadCredentialsException("Please use the admin login instead");
         }
-        String token = jwtUtils.generateToken(user);
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("accessToken", token);
-        response.put("tokenType",   "Bearer");
-        response.put("user", Map.of(
-            "id",    user.getId(),
-            "name",  user.getFullName(),
-            "email", user.getEmail(),
-            "roles", user.getRoles()
-        ));
+        return ResponseEntity.ok(authService.login(req.getEmail(), req.getPassword()));
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<Map<String, Object>> verifyOtp(@Valid @RequestBody OtpRequest req) {
+        Map<String, Object> response = authService.verifyOtp(req.getChallengeToken(), req.getOtp());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> user = (Map<String, Object>) response.get("user");
+        Object roles = user != null ? user.get("roles") : null;
+        if (roles == null || !roles.toString().contains("CUSTOMER")) {
+            throw new org.springframework.security.authentication
+                .BadCredentialsException("Please use the admin login instead");
+        }
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, Object>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest req) {
+        authService.requestCustomerPasswordReset(req.getEmail());
+        return ResponseEntity.ok(Map.of(
+            "message", "If the email is registered, a password reset link has been sent"
+        ));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, Object>> resetPassword(@Valid @RequestBody ResetPasswordRequest req) {
+        authService.resetPassword(req.getToken(), req.getNewPassword());
+        return ResponseEntity.ok(Map.of("message", "Password reset successful"));
     }
 
     @GetMapping("/my-tickets")
@@ -281,6 +300,21 @@ public class CustomerPortalController {
     @Data static class CustomerLoginRequest {
         @NotBlank @Email private String email;
         @NotBlank private String password;
+    }
+
+    @Data static class OtpRequest {
+        @NotBlank private String challengeToken;
+        @NotBlank @jakarta.validation.constraints.Pattern(regexp = "\\d{6}", message = "OTP must be a 6-digit code")
+        private String otp;
+    }
+
+    @Data static class ForgotPasswordRequest {
+        @NotBlank @Email private String email;
+    }
+
+    @Data static class ResetPasswordRequest {
+        @NotBlank private String token;
+        @NotBlank @jakarta.validation.constraints.Size(min = 8) private String newPassword;
     }
 
     @Data static class ReplyRequest {

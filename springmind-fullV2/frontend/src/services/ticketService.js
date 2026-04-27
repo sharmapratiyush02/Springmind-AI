@@ -8,4 +8,5 @@ export const ticketService = {
   addComment:  (id, data)      => api.post(`/tickets/${id}/comments`, data),
   getComments: (id)            => api.get(`/tickets/${id}/comments`),
   stats:       ()              => api.get('/tickets/dashboard/stats'),
+  autoAssign:  ()              => api.post('/tickets/auto-assign'),
 }
